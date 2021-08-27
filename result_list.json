@@ -1,0 +1,18 @@
+{
+    "result": [
+        {
+            "student1": {
+                "name": "Burakhan",
+                "last_name": "Aksoy",
+                "age": 26,
+                "teacher": "Ahmet"
+            },
+            "student2": {
+                "name": "Nigar",
+                "last_name": "Yerebakan",
+                "age": 21,
+                "teacher": "Mehmet"
+            }
+        }
+    ]
+}
