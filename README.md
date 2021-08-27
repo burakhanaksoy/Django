@@ -33,7 +33,7 @@
 [Relationships](#relationships)
 [Writing Views for StudentsDetail](#students-detail-views)
 [User Model](#user-model)
-[Permission Classes](#permission-class)
+[Permissions](#permissions)
 
 ---
 
@@ -2092,16 +2092,77 @@ This should be done with Django's permission classes.
 
 ---
 
-<div id="permission-class">
- <h2>Permission Classes</h2>
+<div id="permissions">
+ <h2>Permissions</h2>
  </div>
  
- [Go here and find out more on access policies](https://github.com/rsinger86/drf-access-policy)
+ Permissions are very important in Django.
  
- <p align="center">
- <img width="875" alt="Screen Shot 2021-08-27 at 10 49 32 AM" src="https://user-images.githubusercontent.com/31994778/131092450-ad0f808e-5ed7-40ae-ab04-a60e1f83366d.png">
+ Let's talk about global permissions.
+ 
+ <i>"Permission checks are always run at the very start of the view, before any other code is allowed to proceed. Permission checks will typically use the authentication information in the request.user and request.auth properties to determine if the incoming request should be permitted."</i>
+ 
+>Permissions in REST framework are always defined as a list of permission classes.
+
+Before running the main body of the view each permission in the list is checked. If any permission check fails an exceptions.PermissionDenied or exceptions.NotAuthenticated exception will be raised, and the main body of the view will not run.
+
+<p align="center">
+ <img width="550" alt="Screen Shot 2021-08-27 at 8 59 25 PM" src="https://user-images.githubusercontent.com/31994778/131169698-682f554a-7f1e-4276-9b08-e8a88b730131.png">
  </p>
  
- To be able to use it, we need to install it via `pip install drf-access-policy`.
+ <h3>Global Permissions</h3>
+ 
+ Global permissions are very strict and they are not very useful in the sense that the developer does not have the liberty to select which views should be permitted or not. In other words, Global permissions override other permissions, i.e., all class and/or function based views. 
+ 
+ First of all, to use permissions, we need to add `path('api-auth/', include('rest_framework.urls'))` to urls.py.
+ 
+ ```
+ urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('api/', include('api.urls')),
+    path('__debug__/', include(debug_toolbar.urls)),
+    path('api-auth/', include('rest_framework.urls'))
+]
+```
+
+This will help us determining users login and logout.
+
+Then, we go to settings.py and make some changes.
+
+```
+REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ]
+}
+```
+
+I also created a user called `burakhan` with only `active` status ticked.
+
+If I don't make a login with any user, I receive the following for all endpoints
+
+<p align="center">
+ <img width="800" alt="Screen Shot 2021-08-27 at 9 16 00 PM" src="https://user-images.githubusercontent.com/31994778/131171533-6bb97dad-18cf-4d26-b558-9242b46b7524.png">
+ </p>
+ 
+ But If I make a login, then I get to see any api endpoint
+ 
+ <p align="center">
+ <img width="800" alt="Screen Shot 2021-08-27 at 9 15 50 PM" src="https://user-images.githubusercontent.com/31994778/131171602-d2879daa-fe8b-4dca-bf5d-50a89ee575e1.png">
+ </p>
+ 
+ We can also use some other permission types such as `IsAuthenticatedOrReadOnly`.
+ 
+ Using that will let authenticated users to list and make changes in the endpoints but let unauthenticated users to only see the endpoints.
+ 
+ Like this
+ 
+ <p align="center">
+ <img width="800" alt="Screen Shot 2021-08-27 at 9 20 39 PM" src="https://user-images.githubusercontent.com/31994778/131171952-c7968045-5b63-40e3-b1d8-29f992b2d9d0.png">
+ </p>
+ 
+ If nothing is provided in settings.py regarding permissions, then django use `AllowAny` as default.
+ 
+ ---
  
  
