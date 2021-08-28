@@ -34,6 +34,7 @@
 [Writing Views for StudentsDetail](#students-detail-views)
 [User Model](#user-model)
 [Permissions](#permissions)
+[Custom Calculations](#custom-calculations)
 
 ---
 
@@ -2257,4 +2258,24 @@ Let's test it
  <b>Only related teacher can list or change their student's information.</b>
  </p>
  
+ <b>Note:</b> All permission classes should inherit from `permissions.BasePermission`.
+ 
+ Also, as we can see here, that, writing our custom permissions is sometimes more logical than using ready-made permissions. This is so because we can do much more with custom permissions, imagination is the limit.
+ 
+ Also, we should always return a Boolean value when we are creating our custom permissions. Django will run permissions prior to running the view it self, returning True and False in permissions will , in other words, determine if the related view would be executed or not.
+ 
  ---
+
+<div id="custom-calculations">
+ <h2>Custom Calculations</h2>
+ </div>
+ 
+ Now, it's time to get fancy. In this part, we are going to create a new endpoint called `add-grade/`, which will be used only by teachers and admin users to add grades to `StudentDetail`.
+ 
+ Our strategy will be as follows:
+ 
+ 1- Create a new endpoint and make it accessible only to admins or teachers.
+ 2- Endpoint should only allow `POST` request.
+ 3- `StudentDetail` model should have it's`grade` field changed as an Integer List field.
+ 4- `StudentDetail` model hould have a new field called `average_grade` that stores the average of all the grades received.
+
