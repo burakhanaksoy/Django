@@ -2127,6 +2127,12 @@ Before running the main body of the view each permission in the list is checked.
 
 This will help us determining users login and logout.
 
+If we don't use `path('api-auth/', include('rest_framework.urls'))`, the following login page can't be used
+
+<p align="center">
+<img width="374" alt="Screen Shot 2021-08-28 at 10 09 46 AM" src="https://user-images.githubusercontent.com/31994778/131209871-8aeb0708-3272-43fe-966e-d6d81cefe2ed.png">
+ </p>
+
 Then, we go to settings.py and make some changes.
 
 ```
@@ -2165,4 +2171,90 @@ If I don't make a login with any user, I receive the following for all endpoints
  
  ---
  
+ <div id="object-level-permissions">
+<h3>Object Level Permissions</h3>
+</div>
+
+<i>"Object level permissions are used to determine if a user should be allowed to act on a particular object, which will typically be a model instance."</i>
+
+This is particularly useful when we want to define specific restrictions on specific views.
+
+In our case, <b>everyone</b>(anonymous user as well), will be able to see `/students/`, `/teachers/` endpoints, but only the teachers and/or admin would be able to see`/students/details/`.
+
+```py
+from rest_framework.permissions import IsAuthenticated
+
+class StudentDetailView(viewsets.ModelViewSet):
+    """
+    A simple ViewSet for listing or retrieving student details.
+    """
+    permission_classes = [IsAuthenticated]
+    queryset = StudentDetail.objects.all()
+    serializer_class = StudentDetailSerializer
+```
+
+ <p align="center">
+<img width="1200" alt="Screen Shot 2021-08-28 at 10 37 28 AM" src="https://user-images.githubusercontent.com/31994778/131210621-861f33d3-59aa-491b-bb6e-5184cac7fe04.png">
+
+ </p>
  
+  <p align="center">
+<img width="1186" alt="Screen Shot 2021-08-28 at 10 40 02 AM" src="https://user-images.githubusercontent.com/31994778/131210624-f85eedfe-fe71-426c-98cc-cc6aa19da482.png">
+ </p>
+ 
+ ---
+ 
+ <h3>Custom Permissions</h3>
+ 
+ As we said in [<b>Object Level Permissions</b>](#object-level-permissions)
+ 
+ ><b>everyone</b>(anonymous user as well), will be able to see `/students/`, `/teachers/` endpoints, but only the teachers and/or admin would be able to see`/students/details/`.
+
+For that, we use custom permissions
+
+In our `api` folder, we open up `permissions.py` file, inside
+
+```py
+from rest_framework import permissions
+
+
+class AdminOrTeacherOnly(permissions.BasePermission):
+    """
+    Object-level permission to only allow teachers of a student to edit.
+    Assumes the model instance has an `owner` attribute.
+    """
+    message = 'Only admin or teacher can list and/or edit student detail.'
+
+    def has_object_permission(self, request, view, obj):
+        # Only teacher and/or admin user will be able to,
+        # edit and/or list this view.
+        is_staff = bool(request.user and request.user.is_staff)
+
+        return obj.student.teacher.first_name == request.user.username or is_staff
+```
+
+This will check whether the user is admin via `is_staff`, also checks if requesting user is the teacher.
+
+Let's test it
+
+<p align="center">
+ <img width="1177" alt="Screen Shot 2021-08-28 at 1 06 35 PM" src="https://user-images.githubusercontent.com/31994778/131214594-10e14c96-8776-4a8d-b4a7-56744e3b8130.png">
+ <b>Admin can do anything, both listing and changing student information.</b>
+ </p>
+
+<p align="center">
+<img width="1168" alt="Screen Shot 2021-08-28 at 1 07 09 PM" src="https://user-images.githubusercontent.com/31994778/131214656-bf1812d6-758b-4459-a6bb-6bae929b5f16.png">
+ <b>Ahmet can only list and change his student's information.</b>
+ </p>
+ 
+ <p align="center">
+<img <img width="1190" alt="Screen Shot 2021-08-28 at 1 07 24 PM" src="https://user-images.githubusercontent.com/31994778/131214682-016bae4b-bb3b-4ba1-ba43-ecc7e6ac759c.png">
+ <b>Ahmet cannot list or change another teacher's student's information.</b>
+ </p>
+ 
+ <p align="center">
+<img width="1186" alt="Screen Shot 2021-08-28 at 1 09 13 PM" src="https://user-images.githubusercontent.com/31994778/131214723-acc0286e-546d-41fa-a954-a51c19c2556d.png">
+ <b>Only related teacher can list or change their student's information.</b>
+ </p>
+ 
+ ---
