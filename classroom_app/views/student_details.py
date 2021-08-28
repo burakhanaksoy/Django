@@ -11,14 +11,15 @@ from api.access_policies import StudentDetailAccessPolicy, StudentDetailDeleteAc
 from django.shortcuts import get_object_or_404
 from rest_framework import viewsets
 
+from api.permissions import AdminOrTeacherOnly
 
 class StudentDetailView(viewsets.ModelViewSet):
     """
     A simple ViewSet for listing or retrieving student details.
     """
+    permission_classes = [AdminOrTeacherOnly]
     queryset = StudentDetail.objects.all()
     serializer_class = StudentDetailSerializer
-
 
 
 # Use these if u use viewsets.ViewSet

@@ -97,7 +97,8 @@ class StudentDetailSerializer(serializers.ModelSerializer):
     """
     info = serializers.SerializerMethodField()
     age = serializers.SerializerMethodField()
-    # teacher = TeacherSimpleSerializer(read_only=False, many=True)
+    course = serializers.SerializerMethodField()
+    teacher = serializers.SerializerMethodField()
 
     class Meta:
         model = StudentDetail
@@ -109,6 +110,12 @@ class StudentDetailSerializer(serializers.ModelSerializer):
 
     def get_info(self, object):
         return {'first_name': object.student.first_name, 'last_name': object.student.last_name}
+
+    def get_course(self, object):
+        return object.student.teacher.course
+
+    def get_teacher(self, object):
+        return object.student.teacher.first_name + ' ' + object.student.teacher.last_name
 
     def validate(self, attrs):
         temp_dict = {k: v for k, v in attrs.items() if (
