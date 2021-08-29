@@ -2321,4 +2321,4 @@ Let's test it
  <h2>Authentication</h2>
  </div>
  
- So far, every request that we handled, which doesn't require authentication,  was through django api interface.
+ So far, every request that we handled, which doesn't require authentication, was through django api interface.
