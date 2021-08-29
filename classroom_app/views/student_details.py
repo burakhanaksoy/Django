@@ -7,7 +7,7 @@ import logging
 from classroom_app.errors import return_400_with_error_log, return_400_admin_error, return_404_with_error_log
 from rest_framework.exceptions import ValidationError
 from api.access_policies import StudentDetailAccessPolicy, StudentDetailDeleteAccessPolicy
-
+from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
 from rest_framework import viewsets
 

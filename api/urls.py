@@ -4,6 +4,7 @@ from rest_framework.routers import DefaultRouter
 from classroom_app.views.teachers import TeacherList, TeacherDetails
 from classroom_app.views.students import StudentList, StudentDetails
 from classroom_app.views.student_details import StudentDetailView
+from classroom_app.views.add_grade import AddGradeView
 
 router = DefaultRouter()
 router.register(r'details', StudentDetailView, basename='StudentDetail')
@@ -18,4 +19,6 @@ urlpatterns = [
 
     path('teachers/', TeacherList.as_view()),
     path('teachers/<int:pk>/', TeacherDetails.as_view()),
+
+    path('students/details/<int:pk>/add-grade/', AddGradeView.as_view())
 ]

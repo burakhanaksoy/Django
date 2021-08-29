@@ -37,7 +37,9 @@ class StudentDetail(models.Model):
     email = models.EmailField(max_length=100, null=True, blank=True)
     phone = models.CharField(max_length=12,
                              blank=True, unique=True, null=True)
-    grade = models.CharField(max_length=10, null=True, blank=True)
+    grade = models.PositiveIntegerField(default=0)
+    avg_grade = models.FloatField(default=0)
+    grade_no = models.PositiveIntegerField(default=0)
 
     def __str__(self):
         return f'{self.student_id}'

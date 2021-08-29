@@ -99,11 +99,13 @@ class StudentDetailSerializer(serializers.ModelSerializer):
     age = serializers.SerializerMethodField()
     course = serializers.SerializerMethodField()
     teacher = serializers.SerializerMethodField()
+    grade = serializers.SerializerMethodField()
+    avg_grade = serializers.SerializerMethodField()
 
     class Meta:
         model = StudentDetail
-        fields = '__all__'
-        # exclude = ['student']
+        # fields = '__all__'
+        exclude = ['grade_no']
 
     def get_age(self, object):
         return object.student.age
@@ -117,13 +119,25 @@ class StudentDetailSerializer(serializers.ModelSerializer):
     def get_teacher(self, object):
         return object.student.teacher.first_name + ' ' + object.student.teacher.last_name
 
+    def get_grade(self, object):
+        return object.grade
+
+    def get_avg_grade(self, object):
+        return object.avg_grade
+
     def validate(self, attrs):
         temp_dict = {k: v for k, v in attrs.items() if (
-            k != "email" and k != "student")}
+            k != "email" and k != "student" and k != "grade" and k != "avg_grade")}
         apply_validator(validate_special_char, temp_dict)
         if 'email' in attrs.keys():
             validate_email(attrs.get("email"))
         return attrs
+
+
+class StudentDetailPostGradeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StudentDetail
+        fields = ('grade',)
 
 
 class StudentDetailSerializerWithTeacherFieldSerializer(StudentDetailSerializer):
