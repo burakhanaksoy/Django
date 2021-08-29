@@ -35,6 +35,7 @@
 [User Model](#user-model)
 [Permissions](#permissions)
 [Custom Calculations](#custom-calculations)
+[Authentication](#authentication)
 
 ---
 
@@ -2316,4 +2317,8 @@ Let's test it
  
  ---
  
+ <div id="authentication">
+ <h2>Authentication</h2>
+ </div>
  
+ So far, every request that we handled, which doesn't require authentication,  was through django api interface.
