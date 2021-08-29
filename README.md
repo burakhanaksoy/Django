@@ -2275,7 +2275,45 @@ Let's test it
  Our strategy will be as follows:
  
  1- Create a new endpoint and make it accessible only to admins or teachers.
- 2- Endpoint should only allow `POST` request.
+ 
+ 2- Endpoint should only allow `PUT`, `PATCH` request.
+ 
  3- `StudentDetail` model should have it's`grade` field changed as an Integer List field.
+ 
  4- `StudentDetail` model hould have a new field called `average_grade` that stores the average of all the grades received.
-
+ 
+<p align="center">
+<img width="600" alt="Screen Shot 2021-08-29 at 9 31 56 AM" src="https://user-images.githubusercontent.com/31994778/131241043-6734ab48-a1f1-4cb9-830c-fd63e93a8dc4.png">
+ </p>
+ 
+ <p align="center">
+  <b>Adding our `add-grade/` endpoint to urls.py.</b>
+ </p>
+ 
+ <p align="center">
+ <img width="609" alt="Screen Shot 2021-08-29 at 9 42 45 AM" src="https://user-images.githubusercontent.com/31994778/131242046-c55ff1b2-a28c-493c-9a4d-f5d4a1697b6b.png">
+ </p>
+ 
+ <p align="center">
+  <b>We introduce grade_no and avg_grade field in our StudentDetail model.</b>
+ </p>
+ 
+ <p align="center">
+ <img width="800" alt="Screen Shot 2021-08-29 at 9 37 54 AM" src="https://user-images.githubusercontent.com/31994778/131241187-6003eae2-69db-43b9-830f-3e947f6f719e.png">
+ </p>
+ 
+ <p align="center">
+  <b>We make related calculations here, calculating the avg_grade everytime a teacher submits a grade.</b>
+ </p>
+ 
+ <p align="center">
+ <img width="1171" alt="Screen Shot 2021-08-29 at 10 40 28 AM" src="https://user-images.githubusercontent.com/31994778/131242760-b3ea9150-fe73-46c6-a290-a457668210ec.png">
+ </p>
+ 
+ <p align="center">
+ <b>avg_grade and grade fields appears successfully.</b>
+ </p>
+ 
+ ---
+ 
+ 
