@@ -377,7 +377,7 @@ INSTALLED_APPS = [
  
  3- Taking the response from another service and relaying it to the sender
  
- It is important to see that Views receive HTTP requests and respond with HTTP Responses.
+ It is important to see that Views receive <b>HTTP requests</b> and respond with <b>HTTP Responses</b>.
  
  This can be visualized as follows:
  
@@ -2322,3 +2322,55 @@ Let's test it
  </div>
  
  So far, every request that we handled, which doesn't require authentication, was through django api interface.
+ 
+ In this chapter, we will learn about different types of authentication, i.e., Basic & Token authentication.
+ 
+ <h3>Basic Authentication</h3>
+ 
+ Weak security. Should only be used for testing purposes.
+ 
+ We add `path('api-auth/', include('rest_framework.urls')),` to our urls.py as:
+ 
+ <img width="535" alt="Screen Shot 2021-10-12 at 10 01 12 PM" src="https://user-images.githubusercontent.com/31994778/137013881-a3eba47b-035f-4a03-9b9e-5f094a90c1e5.png">
+
+ Then, in settings.py, we add:
+ 
+ ```js
+ REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.BasicAuthentication'
+    ]
+}
+```
+
+and inside INSTALLED_APPS
+
+```
+INSTALLED_APPS = [
+    ...,
+    'rest_framework.authtoken',
+]
+```
+
+Inside our students view, we have
+
+<img width="515" alt="Screen Shot 2021-10-12 at 10 03 19 PM" src="https://user-images.githubusercontent.com/31994778/137014132-0eea2594-e493-4de1-9f49-142c7e3ba5e8.png">
+
+This means that our requests to this view through related url will return 403 Forbidden, as follows:
+
+<img width="832" alt="Screen Shot 2021-10-12 at 10 05 14 PM" src="https://user-images.githubusercontent.com/31994778/137014315-8bfd47ed-8ec3-482d-8cd7-a12ba5b49a71.png">
+
+Here, for Basic Authentication, we need to pass Authorization: Basic <Base64 encoded username:password> inside our headers.
+
+<img width="824" alt="Screen Shot 2021-10-12 at 10 06 20 PM" src="https://user-images.githubusercontent.com/31994778/137014503-a8b07170-5471-4657-ab6d-e5b15cc41061.png">
+
+---
+
+<h3>Token Authentication</h3>
+
+Token authentication is much safer to use than Basic authentication since the latter can be compromised easily given the username and password is stolen. Although Token authentication is also be obtained by username and password, it can also be obtained by sending a POST request to another API, which makes it safer.
+ 
+ 
