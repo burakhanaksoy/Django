@@ -2373,4 +2373,91 @@ Here, for Basic Authentication, we need to pass Authorization: Basic <Base64 enc
 
 Token authentication is much safer to use than Basic authentication since the latter can be compromised easily given the username and password is stolen. Although Token authentication is also be obtained by username and password, it can also be obtained by sending a POST request to another API, which makes it safer.
  
+In order to utilize Token Authentication, we need to add `'rest_framework.authtoken'` to `INSTALLED_APPS` in settings.py:
+ 
+```js
+ INSTALLED_APPS = [
+    ...,
+   'rest_framework.authtoken',
+    ...
+
+]
+```
+ 
+ After that, since our APPS changed, we need to run `manage.py makemigrations` and `manage.py migrate` once again to create tables in the DB.
+ 
+ Secondly, we need to add `DEFAULT_AUTHENTICATION_CLASSES` to `REST_FRAMEWORK` dict.
+ 
+ ```js
+ REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated'
+    ],
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication'
+    ]
+}
+```
+
+ Having done these steps, let's login to the admin panel.
+ 
+ As we can see, TOKEN table is created in DB and reflected on the admin panel.
+ 
+ <img width="864" alt="Screen Shot 2021-10-13 at 10 37 51 PM" src="https://user-images.githubusercontent.com/31994778/137201575-cf7eb1e1-5ee0-4c1b-ad74-5db937362e3a.png">
+
+ Here, each user should have their unique token for authentication. For now, we added tokens manually, but we should automate this process later on.
+ 
+ Let's go to our student_details.py view and verify that we have permission and authentication classes.
+ 
+ ```py
+ from rest_framework import authentication, permissions
+ 
+ class StudentDetailView(viewsets.ModelViewSet):
+    """
+    [
+        {
+            "student": 1,
+            "info": {
+                "first_name": "Burakhan",
+                "last_name": "Aksoy"
+            },
+            "age": 26,
+            "course": "CS101",
+            "teacher": "Ahmet Cevdet",
+            "grade": 0,
+            "avg_grade": 0.0,
+            "city": "Istanbul",
+            "email": "burakhan.aksoy@test.com",
+            "phone": "218382181221"
+        }
+    ]
+    """
+    permission_classes = [permissions.IsAdminUser]
+    authentication_classes = [authentication.TokenAuthentication]
+    queryset = StudentDetail.objects.all()
+    serializer_class = StudentDetailSerializer
+ ```
+ 
+ This means that users should be authenticated and also only the admin user can reach this view (permission).
+ 
+ Let's try sending a GET request without authentication...
+ 
+ <img width="1006" alt="Screen Shot 2021-10-13 at 10 31 43 PM" src="https://user-images.githubusercontent.com/31994778/137201983-429d6ed6-4b79-4bae-9c84-bdb864f303e6.png">
+ 
+ As we can see, the Authorization header is not used, that's why we get `401 Unauthorized`.
+ 
+ Let's authenticate but send request with a non-admin user.
+ 
+ <img width="1016" alt="Screen Shot 2021-10-13 at 10 32 12 PM" src="https://user-images.githubusercontent.com/31994778/137202121-93cc99df-f067-4dea-9042-c8b8c1f65479.png">
+
+ This time, we get `403 Forbidden`.
+ 
+ Let's try with the admin user.
+ 
+ <img width="824" alt="Screen Shot 2021-10-13 at 10 32 48 PM" src="https://user-images.githubusercontent.com/31994778/137202176-4b516ac0-4297-4935-8a45-117e2f73577c.png">
+
+ And voila!
+ 
+ 
+
  
