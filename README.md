@@ -2410,10 +2410,11 @@ In order to utilize Token Authentication, we need to add `'rest_framework.authto
  Let's go to our student_details.py view and verify that we have permission and authentication classes.
  
  ```py
- from rest_framework import authentication, permissions
+from api.permissions import AdminOnly
  
  class StudentDetailView(viewsets.ModelViewSet):
     """
+    View for displaying student detail information.
     [
         {
             "student": 1,
@@ -2432,8 +2433,8 @@ In order to utilize Token Authentication, we need to add `'rest_framework.authto
         }
     ]
     """
-    permission_classes = [permissions.IsAdminUser]
     authentication_classes = [authentication.TokenAuthentication]
+    permission_classes = [AdminOnly]
     queryset = StudentDetail.objects.all()
     serializer_class = StudentDetailSerializer
  ```
@@ -2452,11 +2453,30 @@ In order to utilize Token Authentication, we need to add `'rest_framework.authto
 
  This time, we get `403 Forbidden`.
  
+ <img width="1068" alt="Screen Shot 2021-10-15 at 1 06 45 AM" src="https://user-images.githubusercontent.com/31994778/137402277-a1eb4871-067a-4542-8f58-7da1d3dc8b0d.png">
+
+ The reason that we got 403 Forbidden is because `burak` does not have permission to access this endpoint.
+ 
+ Let's take a look at our permission_classes...
+ 
+ <img width="483" alt="Screen Shot 2021-10-15 at 1 18 11 AM" src="https://user-images.githubusercontent.com/31994778/137403236-ba837c21-87a0-476a-b595-170543446fac.png">
+
+ As we can see, only the admin user, in other words, `is_staff == True`, will be able to access this endpoint.
+ 
+ 
  Let's try with the admin user.
  
- <img width="824" alt="Screen Shot 2021-10-13 at 10 32 48 PM" src="https://user-images.githubusercontent.com/31994778/137202176-4b516ac0-4297-4935-8a45-117e2f73577c.png">
+ Now, let's use admin token `77a1cdd41bbc138da80ea96e1a378aff7b245c31`.
+ 
+ <img width="570" alt="Screen Shot 2021-10-15 at 1 21 47 AM" src="https://user-images.githubusercontent.com/31994778/137403723-8bb6f96f-885a-4419-ab30-02f8977b7851.png">
+ 
+ After the permission is granted...
+ 
+ <img width="801" alt="Screen Shot 2021-10-15 at 1 24 39 AM" src="https://user-images.githubusercontent.com/31994778/137403859-3b416a3f-d8a6-4327-b3aa-d395483420da.png">
 
- And voila!
+ Voila!
+ 
+ ---
  
  
 
