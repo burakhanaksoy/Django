@@ -2371,7 +2371,7 @@ Here, for Basic Authentication, we need to pass Authorization: Basic <Base64 enc
 
 <h3>Token Authentication</h3>
 
-Token authentication is much safer to use than Basic authentication since the latter can be compromised easily given the username and password is stolen. Although Token authentication is also be obtained by username and password, it can also be obtained by sending a POST request to another API, which makes it safer.
+Token authentication is much safer to use than Basic authentication since the latter can be compromised easily given the username and password is stolen. Token authentication, on the other hand, is obtained by a unique token stored inside DB, which makes it much safer than Basic authentication.
  
 In order to utilize Token Authentication, we need to add `'rest_framework.authtoken'` to `INSTALLED_APPS` in settings.py:
  
