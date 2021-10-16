@@ -2537,4 +2537,70 @@ urlpatterns = [
  
  ---
  
+ <h3>Registration</h3>
+ 
+ Firstly, we need a new endpoint, for that, inside our user_app's urls.py:
+ 
+ ```js
+ urlpatterns = [
+    ...,
+    path('register/', RegisterUser.as_view(), name='register'),
+]
+ ```
+ 
+ Then, inside our user_app's serializers.py:
+ 
+ ```py
+ from rest_framework import serializers
+from django.contrib.auth.models import User
+from rest_framework.validators import UniqueValidator
+from django.contrib.auth.password_validation import validate_password
+
+
+class RegisterSerializer(serializers.ModelSerializer):
+    ...
+ 
+    class Meta:
+        ...
+
+    def validate(self, attrs):
+        ...
+
+    def create(self, validated_data):
+        ...
+```
+ 
+ Then, inside our user_app's views.py:
+ 
+ ```py
+ from django.contrib.auth.models import User
+from rest_framework import generics
+from user_app.api.serializers import RegisterSerializer
+
+
+class RegisterUser(generics.CreateAPIView):
+    queryset = User.objects.all()
+    serializer_class = RegisterSerializer
+    permission_classes = []
+    authentication_classes = []
+```
+ 
+ <img width="600" alt="Screen Shot 2021-10-16 at 7 12 31 PM" src="https://user-images.githubusercontent.com/31994778/137594606-45de46e5-1e7c-4bee-a9ed-2d9058bd6b90.png">
+
+ Checking Django admin panel
+ 
+ <img width="600" alt="Screen Shot 2021-10-16 at 7 13 27 PM" src="https://user-images.githubusercontent.com/31994778/137594623-bc153931-21f1-4bef-acd8-2c7d07581487.png">
+
+ Then, if we login with this user, we should obtain the Token.
+ 
+ <img width="600" alt="Screen Shot 2021-10-16 at 7 15 01 PM" src="https://user-images.githubusercontent.com/31994778/137594689-a97989f6-3220-4a6b-8e6f-c3ce0cb7e505.png">
+ 
+ Now, the main question is:
+ 
+ <b>1- How can we stay logged in when the new user is registered?
+  
+  <b>2- How can we delete token when the user logs out?
+   
+ ---
+ 
  
