@@ -6,12 +6,17 @@ from rest_framework.exceptions import ValidationError
 from api.serializers import TeacherSimpleSerializer, TeacherWithStudentFieldSerializer
 from classroom_app.errors import return_400_with_error_log, return_404_with_error_log, return_400_admin_error
 import logging
+from api.permissions import AdminOrTeacherOnly
+from rest_framework import authentication
 
 
 class TeacherList(APIView):
     """
     List all teachers, or create a new teacher.
     """
+
+    authentication_classes = (authentication.TokenAuthentication,)
+    permission_classes = (AdminOrTeacherOnly,)
 
     def get(self, request, format=None):
         teachers = Teacher.objects.all()
@@ -24,9 +29,9 @@ class TeacherList(APIView):
             return Response(None, status=status.HTTP_204_NO_CONTENT)
 
     def post(self, request, format=None):
-        is_super_user = self.request.user.is_superuser
-        if not is_super_user:
-            raise ValidationError('Only Admin account can do this operation.')
+        # is_super_user = self.request.user.is_superuser
+        # if not is_super_user:
+        #     raise ValidationError('Only Admin account can do this operation.')
         serializer = TeacherSimpleSerializer(data=request.data)
 
         if serializer.is_valid():
