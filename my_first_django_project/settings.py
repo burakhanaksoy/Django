@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'debug_toolbar',
     'rest_framework.authtoken',
     'rest_framework',
+    'user_app.apps.UserAppConfig'
 
 ]
 

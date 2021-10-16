@@ -37,7 +37,7 @@ class StudentDetailView(viewsets.ModelViewSet):
     ]
     """
     authentication_classes = [authentication.TokenAuthentication]
-    permission_classes = [AdminOnly]
+    permission_classes = [AdminOrTeacherOnly]
     queryset = StudentDetail.objects.all()
     serializer_class = StudentDetailSerializer
 

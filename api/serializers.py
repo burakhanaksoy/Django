@@ -1,3 +1,4 @@
+from django.db.models.fields import CharField
 from rest_framework import serializers
 from classroom_app.models import Teacher, Student, StudentDetail
 
@@ -14,13 +15,15 @@ class TeacherSimpleSerializer(serializers.ModelSerializer):
     """
     class Meta:
         model = Teacher
+        fields='__all__'
         read_only_fields = ['id']
-        exclude = ['id', 'email']
+        optional_fields = ['email', ]
 
     def validate(self, attrs):
         temp_dict = {k: v for k, v in attrs.items() if (
             k != "email" and k != "course")}
         apply_validator(validate_special_char, temp_dict)
+        attrs["email"] = f"{attrs.get('first_name','test').lower()}.{attrs.get('last_name','test').lower()}@school.com"
 
         if("email" in attrs.keys()):
             validate_email(attrs.get("email"))
@@ -95,7 +98,7 @@ class StudentDetailSerializer(serializers.ModelSerializer):
     """
         Student Detail Serializer base.
     """
-    info = serializers.SerializerMethodField()
+    name = serializers.SerializerMethodField()
     age = serializers.SerializerMethodField()
     course = serializers.SerializerMethodField()
     teacher = serializers.SerializerMethodField()
@@ -104,13 +107,12 @@ class StudentDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = StudentDetail
-        # fields = '__all__'
         exclude = ['grade_no']
 
     def get_age(self, object):
         return object.student.age
 
-    def get_info(self, object):
+    def get_name(self, object):
         return {'first_name': object.student.first_name, 'last_name': object.student.last_name}
 
     def get_course(self, object):

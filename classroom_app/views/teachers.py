@@ -38,7 +38,7 @@ class TeacherList(APIView):
             serializer.save()
             logging.info(f"INFO: Returned 201")
             logging.info(f'INFO: {request.data} created')
-            return Response(None, status=status.HTTP_201_CREATED)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
         return return_400_with_error_log(serializer.errors)
 
 

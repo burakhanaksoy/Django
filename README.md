@@ -2478,6 +2478,129 @@ from api.permissions import AdminOnly
  
  ---
  
+ <h2>Handling Login, Logout, Registration</h2>
  
+ So far, we added token's to our users manually through Django admin panel. Then, we copied these tokens and pasted as `Authorization: Token asd293104sadk123`.
+ 
+ This is fine and dandy. But of course automating these things would be much better. Imagine we register our users, give them a token, get token, and delete token on logout without using Django admin panel. Let's do that in this part.
+ 
+ <h3>Login</h3>
+ 
+ Let's create a new Django application called `user_app`, just like `classroom_app`. We will use the newly created app only for handling Login, Logout, and Registration.
+ 
+ Firstly, let's create our `user_app` through `python3 manage.py startapp user_app`.
+ 
+ <img width="343" alt="Screen Shot 2021-10-16 at 4 10 19 PM" src="https://user-images.githubusercontent.com/31994778/137588886-813756fa-ec24-44a3-a00b-8a672a18649a.png">
 
+ Then, let's create a new folder `api` to contain our urls.py, views.py, and serializers.py.
+ 
+ <img width="344" alt="Screen Shot 2021-10-16 at 4 11 39 PM" src="https://user-images.githubusercontent.com/31994778/137588929-197d1121-f5a1-4426-ba59-203d4edb367d.png">
+
+ Then, under our Django project folder's settings.py, add the following:
+ 
+ ```js
+ INSTALLED_APPS = [
+    ...,
+    'user_app.apps.UserAppConfig'
+]
+ ```
+
+ Run makemigrations and migrate again.
+ 
+ Now, inside urls.py of user_app, let's use Django's `obtain_auth_token` view to handle login.
+ 
+ ```py
+ from django.urls import path
+from rest_framework.authtoken.views import obtain_auth_token
+
+urlpatterns = [
+    path('login/', obtain_auth_token, name='login')
+]
+```
+ 
+ Of course, inside our project urls.py, include the new endpoints coming from `user_app`.
+ 
+ ```js
+ urlpatterns = [
+    ...,
+    path('account/', include('user_app.api.urls'))
+]
+ ```
+
+ Let's try...
+ 
+ <img width="824" alt="Screen Shot 2021-10-16 at 4 16 28 PM" src="https://user-images.githubusercontent.com/31994778/137589042-0c7dec93-6255-4c87-a625-d98fce01656e.png">
+
+ Awesome.
+ 
+ From now on, we don't have to login through Django admin panel and get the authentication token. We can simply send a POST request to this endpoint.
+ 
+ ---
+ 
+ <h3>Registration</h3>
+ 
+ Firstly, we need a new endpoint, for that, inside our user_app's urls.py:
+ 
+ ```js
+ urlpatterns = [
+    ...,
+    path('register/', RegisterUser.as_view(), name='register'),
+]
+ ```
+ 
+ Then, inside our user_app's serializers.py:
+ 
+ ```py
+ from rest_framework import serializers
+from django.contrib.auth.models import User
+from rest_framework.validators import UniqueValidator
+from django.contrib.auth.password_validation import validate_password
+
+
+class RegisterSerializer(serializers.ModelSerializer):
+    ...
+ 
+    class Meta:
+        ...
+
+    def validate(self, attrs):
+        ...
+
+    def create(self, validated_data):
+        ...
+```
+ 
+ Then, inside our user_app's views.py:
+ 
+ ```py
+ from django.contrib.auth.models import User
+from rest_framework import generics
+from user_app.api.serializers import RegisterSerializer
+
+
+class RegisterUser(generics.CreateAPIView):
+    queryset = User.objects.all()
+    serializer_class = RegisterSerializer
+    permission_classes = []
+    authentication_classes = []
+```
+ 
+ <img width="600" alt="Screen Shot 2021-10-16 at 7 12 31 PM" src="https://user-images.githubusercontent.com/31994778/137594606-45de46e5-1e7c-4bee-a9ed-2d9058bd6b90.png">
+
+ Checking Django admin panel
+ 
+ <img width="600" alt="Screen Shot 2021-10-16 at 7 13 27 PM" src="https://user-images.githubusercontent.com/31994778/137594623-bc153931-21f1-4bef-acd8-2c7d07581487.png">
+
+ Then, if we login with this user, we should obtain the Token.
+ 
+ <img width="600" alt="Screen Shot 2021-10-16 at 7 15 01 PM" src="https://user-images.githubusercontent.com/31994778/137594689-a97989f6-3220-4a6b-8e6f-c3ce0cb7e505.png">
+ 
+ Now, the main question is:
+ 
+ <b>1- How can we stay logged in when the new user is registered?
+  
+  <b>2- How can we delete token when the user logs out?
+   
+ ---
+ 
  
