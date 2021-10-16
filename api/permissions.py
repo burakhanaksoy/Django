@@ -8,9 +8,17 @@ class AdminOrTeacherOnly(permissions.BasePermission):
     """
     message = 'Only admin or teacher can list and/or edit student detail.'
 
-    def has_object_permission(self, request, view, obj):
+    def has_permission(self, request, view):
         # Only teacher and/or admin user will be able to,
         # edit and/or list this view.
         is_staff = bool(request.user and request.user.is_staff)
 
-        return obj.student.teacher.first_name == request.user.username or is_staff
+        return is_staff or str(request.user.groups.all().first()) == 'teacher'
+
+class AdminOnly(permissions.BasePermission):
+    """
+    Allows access only to admin users.
+    """
+
+    def has_permission(self, request, view):
+        return bool(request.user and request.user.is_staff)
