@@ -2533,6 +2533,8 @@ urlpatterns = [
 
  Awesome.
  
+ From now on, we don't have to login through Django admin panel and get the authentication token. We can simply send a POST request to this endpoint.
+ 
  ---
  
  
