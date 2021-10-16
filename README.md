@@ -2478,6 +2478,61 @@ from api.permissions import AdminOnly
  
  ---
  
+ <h2>Handling Login, Logout, Registration</h2>
  
+ So far, we added token's to our users manually through Django admin panel. Then, we copied these tokens and pasted as `Authorization: Token asd293104sadk123`.
+ 
+ This is fine and dandy. But of course automating these things would be much better. Imagine we register our users, give them a token, get token, and delete token on logout without using Django admin panel. Let's do that in this part.
+ 
+ <h3>Login</h3>
+ 
+ Let's create a new Django application called `user_app`, just like `classroom_app`. We will use the newly created app only for handling Login, Logout, and Registration.
+ 
+ Firstly, let's create our `user_app` through `python3 manage.py startapp user_app`.
+ 
+ <img width="343" alt="Screen Shot 2021-10-16 at 4 10 19 PM" src="https://user-images.githubusercontent.com/31994778/137588886-813756fa-ec24-44a3-a00b-8a672a18649a.png">
 
+ Then, let's create a new folder `api` to contain our urls.py, views.py, and serializers.py.
+ 
+ <img width="344" alt="Screen Shot 2021-10-16 at 4 11 39 PM" src="https://user-images.githubusercontent.com/31994778/137588929-197d1121-f5a1-4426-ba59-203d4edb367d.png">
+
+ Then, under our Django project folder's settings.py, add the following:
+ 
+ ```js
+ INSTALLED_APPS = [
+    ...,
+    'user_app.apps.UserAppConfig'
+]
+ ```
+
+ Run makemigrations and migrate again.
+ 
+ Now, inside urls.py of user_app, let's use Django's `obtain_auth_token` view to handle login.
+ 
+ ```py
+ from django.urls import path
+from rest_framework.authtoken.views import obtain_auth_token
+
+urlpatterns = [
+    path('login/', obtain_auth_token, name='login')
+]
+```
+ 
+ Of course, inside our project urls.py, include the new endpoints coming from `user_app`.
+ 
+ ```js
+ urlpatterns = [
+    ...,
+    path('account/', include('user_app.api.urls'))
+]
+ ```
+
+ Let's try...
+ 
+ <img width="824" alt="Screen Shot 2021-10-16 at 4 16 28 PM" src="https://user-images.githubusercontent.com/31994778/137589042-0c7dec93-6255-4c87-a625-d98fce01656e.png">
+
+ Awesome.
+ 
+ ---
+ 
  
