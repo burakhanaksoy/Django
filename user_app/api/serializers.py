@@ -2,7 +2,7 @@ from rest_framework import serializers
 from django.contrib.auth.models import User
 from rest_framework.validators import UniqueValidator
 from django.contrib.auth.password_validation import validate_password
-
+from rest_framework.authtoken.models import Token
 
 class RegisterSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(
@@ -39,5 +39,7 @@ class RegisterSerializer(serializers.ModelSerializer):
 
         user.set_password(validated_data['password'])
         user.save()
-
-        return user
+        validated_data.pop('password')
+        validated_data.pop('password2')
+        validated_data['token'] = Token.objects.get(user=user).key
+        return validated_data
