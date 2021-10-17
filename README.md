@@ -2707,13 +2707,17 @@ class RegisterUser(generics.GenericAPIView):
  
  Let's check the Django admin panel to verify whether we created our user successfully or not.
  
- <img width="826" alt="Screen Shot 2021-10-17 at 12 00 23 PM" src="https://user-images.githubusercontent.com/31994778/137619988-cd98c82b-47b1-4ede-92ac-95ab919a6f88.png">
+ <img width="600" alt="Screen Shot 2021-10-17 at 12 00 23 PM" src="https://user-images.githubusercontent.com/31994778/137619988-cd98c82b-47b1-4ede-92ac-95ab919a6f88.png">
  
  Now, let's check if the Token is generated automatically.
  
- <img width="940" alt="Screen Shot 2021-10-17 at 12 00 49 PM" src="https://user-images.githubusercontent.com/31994778/137620003-235483c1-96a6-4242-92e4-1294a871d05c.png">
+ <img width="600" alt="Screen Shot 2021-10-17 at 12 00 49 PM" src="https://user-images.githubusercontent.com/31994778/137620003-235483c1-96a6-4242-92e4-1294a871d05c.png">
  
  Awesome
+ 
+ Of course, if we want to register the same user again, we should have errors.
+ 
+ <img width="600" alt="Screen Shot 2021-10-17 at 12 41 14 PM" src="https://user-images.githubusercontent.com/31994778/137621535-817a85e1-aeae-4d34-8aaa-cfc42dde44d7.png">
  
  Here, I used Mr. Yunus Emre Cevik's serializer class that I bumped into on medium. 
  
