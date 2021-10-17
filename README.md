@@ -2725,7 +2725,70 @@ class RegisterUser(generics.GenericAPIView):
  
  ---
  
+ <h3>Logout</h3>
  
+ We previously asked the following question, <b>How can we delete token when the user logs out?</b>.
  
+ Let's handle that.
+ 
+ Inside `user_app` app folder, created views folder and added logout.py file.
+ 
+ <img width="348" alt="Screen Shot 2021-10-17 at 1 33 21 PM" src="https://user-images.githubusercontent.com/31994778/137623431-f20cbd35-f363-47d4-b97f-e8ee50d7ed35.png">
 
+ Then, inside our logout.py, we have:
+ 
+ ```py
+ from django.contrib.auth.models import User
+from rest_framework import generics
+from rest_framework import status
+from rest_framework.response import Response
+from rest_framework import authentication
+
+class Logout(generics.GenericAPIView):
+    queryset = User.objects.all()
+    permission_classes = []
+    authentication_classes = [authentication.TokenAuthentication]
+
+    def post(self, request, *args, **kwargs):
+        request.user.auth_token.delete()
+        data = {"msg":"logout successfully."}
+        return Response(data, status= status.HTTP_200_OK)
+```
+ 
+ Of course, under urls.py of our app `user_app`, added the new endpoint:
+ 
+ ```js
+ urlpatterns = [
+    ...,
+    path('logout/', logout.as_view(), name='logout'),
+]
+ ```
+
+ Our aim is as follows:
+ 
+ 1- If user is registered and logged in, logout should delete their token.
+ 
+ 2- If user is not logged in, logout should return 401.
+ 
+ Currently, I am logged in as `burakhan`, and newly generated Token matches with the one in Django admin panel.
+ 
+ <img width="600" alt="Screen Shot 2021-10-17 at 1 37 11 PM" src="https://user-images.githubusercontent.com/31994778/137623573-b8e066ba-d9fb-47a8-a12b-79ac203bf002.png">
+
+<img width="600" alt="Screen Shot 2021-10-17 at 1 37 30 PM" src="https://user-images.githubusercontent.com/31994778/137623580-e383841e-0b5f-488f-a25e-27155f910a15.png">
+
+ Now, let's logout.
+ 
+ <img width="830" alt="Screen Shot 2021-10-17 at 1 39 56 PM" src="https://user-images.githubusercontent.com/31994778/137623657-acd0ed9e-4853-477a-bb56-b571c0ebaa7f.png">
+ 
+ And check the Django admin panel.
+ 
+ <img width="741" alt="Screen Shot 2021-10-17 at 1 40 55 PM" src="https://user-images.githubusercontent.com/31994778/137623673-013af8b5-34e1-4c5b-9c01-6e3f7f66b2a4.png">
+ 
+ As we can see, `burakhan`'s token is deleted. However, as a user, `burakhan` still exists in our DB.
+ 
+ <img width="758" alt="Screen Shot 2021-10-17 at 1 41 52 PM" src="https://user-images.githubusercontent.com/31994778/137623719-c807fd7b-09fb-485b-b390-75167949433a.png">
+
+---
+ 
+ 
 
