@@ -12,7 +12,7 @@ from django.shortcuts import get_object_or_404
 from rest_framework import viewsets
 from rest_framework import authentication, permissions
 
-from api.permissions import AdminOrTeacherOnly, AdminOnly
+from api.permissions import AdminOrRelatedTeacherOnly, AdminOnly
 
 
 class StudentDetailView(viewsets.ModelViewSet):
@@ -37,14 +37,14 @@ class StudentDetailView(viewsets.ModelViewSet):
     ]
     """
     authentication_classes = [authentication.TokenAuthentication]
-    permission_classes = [AdminOrTeacherOnly]
+    permission_classes = [AdminOrRelatedTeacherOnly]
     queryset = StudentDetail.objects.all()
     serializer_class = StudentDetailSerializer
 
 # Use these if u use viewsets.ViewSet
     def list(self, request):
         """Overrides mixins.ListModelMixin list method """
-        serializer = StudentDetailSerializer(self.queryset, many=True)
+        serializer = StudentDetailSerializer(StudentDetail.objects.all(), many=True)
         if not serializer.data:
             return Response(status=status.HTTP_204_NO_CONTENT)
 

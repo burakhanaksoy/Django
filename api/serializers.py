@@ -15,7 +15,7 @@ class TeacherSimpleSerializer(serializers.ModelSerializer):
     """
     class Meta:
         model = Teacher
-        fields='__all__'
+        fields = '__all__'
         read_only_fields = ['id']
         optional_fields = ['email', ]
 
@@ -56,12 +56,15 @@ class StudentListSerializer(StudentSimpleSerializer):
     """
         Customized serializer. Use this for only displaying purpose.
     """
-    teacher = TeacherSimpleSerializer(read_only=False)
+    teacher = serializers.SerializerMethodField()
 
     class Meta:
         model = Student
         read_only_fields = ['student_id']
         fields = '__all__'
+
+    def get_teacher(self, object):
+        return {"name": f'{object.teacher.first_name} {object.teacher.last_name}', "course": object.teacher.course}
 
 
 class StudentPostSerializer(StudentSimpleSerializer):
@@ -139,7 +142,7 @@ class StudentDetailSerializer(serializers.ModelSerializer):
 class StudentDetailPostGradeSerializer(serializers.ModelSerializer):
     class Meta:
         model = StudentDetail
-        fields = ('grade', 'city','email','avg_grade', 'grade_no')
+        fields = ('grade', 'city', 'email', 'avg_grade', 'grade_no')
 
     def validate(self, attrs):
         if attrs['grade'] < 0:
