@@ -2597,10 +2597,131 @@ class RegisterUser(generics.CreateAPIView):
  
  Now, the main question is:
  
- <b>1- How can we stay logged in when the new user is registered?
+ <b>1- How can we stay logged in when the new user is registered?</b>
   
-  <b>2- How can we delete token when the user logs out?
+  <b>2- How can we delete token when the user logs out?</b>
    
  ---
  
+   <h3>Automatically Generate Token in Registration</h3>
+   
+   In the previous parts, we talked about registration and login functionalities. However, we didn't generate our User tokens automatically when we register them.
+   
+   In this part, let's tackle that challenge.
+   
+   For reference please read [this document](https://www.django-rest-framework.org/api-guide/authentication/).
+   
+   For starters, we need to do some touch-up on our `user_app`'s models.py:
  
+ ```py
+ from django.conf import settings
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from rest_framework.authtoken.models import Token
+
+@receiver(post_save, sender=settings.AUTH_USER_MODEL)
+def create_auth_token(sender, instance=None, created=False, **kwargs):
+    if created:
+        Token.objects.create(user=instance)
+```
+ 
+ This is a great use of the `Observer Pattern` by Django. Here, as soon as a model's save() method is called, Django will dispatch `create_user_auth_token` method.
+ 
+ <img width="629" alt="Screen Shot 2021-10-17 at 11 49 47 AM" src="https://user-images.githubusercontent.com/31994778/137619534-e0da89d6-dcb4-43c8-ab41-eed54a5ce64c.png">
+
+For more on this, refer to [here](https://docs.djangoproject.com/en/3.2/topics/signals/).
+ 
+ <b>Now that we know as soon as we create a new User, this code snippet will be triggered as a callback function and a token will be generated for the registered user.</b>
+ 
+ Let's take a look at our `RegisterSerializer`:
+ 
+ ```py
+from rest_framework import serializers
+from django.contrib.auth.models import User
+from rest_framework.validators import UniqueValidator
+from django.contrib.auth.password_validation import validate_password
+from rest_framework.authtoken.models import Token
+
+class RegisterSerializer(serializers.ModelSerializer):
+    ...
+
+    class Meta:
+       ...
+
+    def validate(self, attrs):
+        ...
+
+    def create(self, validated_data):
+        user = User.objects.create(
+            username=validated_data['username'],
+            email=validated_data['email'],
+            first_name=validated_data['first_name'],
+            last_name=validated_data['last_name']
+        )
+
+        user.set_password(validated_data['password'])
+        user.save()
+        validated_data.pop('password')
+        validated_data.pop('password2')
+        validated_data['token'] = Token.objects.get(user=user).key
+        return validated_data
+```
+ 
+ Here, let's focus on the `create` method. This method will be called when we call `serializer.save()` in our registration view.
+ 
+ Here, we pop `password` and `password2` fields from the validated_data and add `validated_data['token'] = Token.objects.get(user=user).key`. Removing password fields from validated_data wouldn't be a problem because we do that after we call `user.save()`.
+ 
+ Let's take a look at the `views.py`:
+ 
+ ```py
+from django.contrib.auth.models import User
+from rest_framework import generics
+from user_app.api.serializers import RegisterSerializer
+from rest_framework import status
+from rest_framework.response import Response
+
+
+class RegisterUser(generics.GenericAPIView):
+    queryset = User.objects.all()
+    serializer_class = RegisterSerializer
+    permission_classes = []
+    authentication_classes = []
+
+    def post(self, request, *args, **kwargs):
+        data = {}
+        serializer = self.get_serializer(data=request.data)
+
+        if serializer.is_valid():
+            data = serializer.save()
+        else:
+            data['errors'] = serializer.errors
+
+        if 'errors' in data.keys():
+            return Response(data, status=status.HTTP_400_BAD_REQUEST)
+        return Response(data, status=status.HTTP_201_CREATED)
+```
+ 
+ Here, if the serializer is valid, we call serializer.save() and return a 201_Created response, else 400 Bad Request.
+ 
+ <img width="600" alt="Screen Shot 2021-10-17 at 11 58 40 AM" src="https://user-images.githubusercontent.com/31994778/137619928-d033ffcb-d2f0-47e7-9fc2-9c0054ad47c7.png">
+ 
+ Let's check the Django admin panel to verify whether we created our user successfully or not.
+ 
+ <img width="826" alt="Screen Shot 2021-10-17 at 12 00 23 PM" src="https://user-images.githubusercontent.com/31994778/137619988-cd98c82b-47b1-4ede-92ac-95ab919a6f88.png">
+ 
+ Now, let's check if the Token is generated automatically.
+ 
+ <img width="940" alt="Screen Shot 2021-10-17 at 12 00 49 PM" src="https://user-images.githubusercontent.com/31994778/137620003-235483c1-96a6-4242-92e4-1294a871d05c.png">
+ 
+ Awesome
+ 
+ Here, I used Mr. Yunus Emre Cevik's serializer class that I bumped into on medium. 
+ 
+ Please check out his great [article](https://medium.com/django-rest/django-rest-framework-login-and-register-user-fd91cf6029d5).
+ 
+ ---
+ 
+ 
+ 
+
+
