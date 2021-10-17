@@ -139,7 +139,13 @@ class StudentDetailSerializer(serializers.ModelSerializer):
 class StudentDetailPostGradeSerializer(serializers.ModelSerializer):
     class Meta:
         model = StudentDetail
-        fields = ('grade',)
+        fields = ('grade', 'city','email','avg_grade', 'grade_no')
+
+    def validate(self, attrs):
+        if attrs['grade'] < 0:
+            raise serializers.ValidationError(
+                {"grade": "Grade cannot be negative."})
+        return attrs
 
 
 class StudentDetailSerializerWithTeacherFieldSerializer(StudentDetailSerializer):
