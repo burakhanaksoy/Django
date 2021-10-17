@@ -1,5 +1,5 @@
 from rest_framework import permissions
-
+from classroom_app.models import StudentDetail
 
 class AdminOrTeacherOnly(permissions.BasePermission):
     """
@@ -15,6 +15,7 @@ class AdminOrTeacherOnly(permissions.BasePermission):
 
         return is_staff or str(request.user.groups.all().first()) == 'teacher'
 
+
 class AdminOnly(permissions.BasePermission):
     """
     Allows access only to admin users.
@@ -22,3 +23,16 @@ class AdminOnly(permissions.BasePermission):
 
     def has_permission(self, request, view):
         return bool(request.user and request.user.is_staff)
+
+
+class AdminOrRelatedTeacherOnly(permissions.BasePermission):
+    """
+    Allows access only to admin users and/or the related teacher.
+    """
+    message = "Only admin or this student's teacher can add grade."
+
+    def has_permission(self, request, view):
+        is_staff = bool(request.user and request.user.is_staff)
+        pk = view.kwargs.get('pk')
+        student_detail = StudentDetail.objects.get(pk=pk)
+        return is_staff or (student_detail.student.teacher.first_name.lower() == request.user.username.lower())
