@@ -2884,7 +2884,54 @@ Here, the most important thing is that we need to make sure our `secret` is prot
 
  ---
  
+ <h3>Changing Our Project with JWT</h3>
  
+Under `user_app.api`, inside urls.py, let's add the url patterns:
+ 
+```py
+from django.urls import path
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
+urlpatterns = [
+    ...,
+    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+]
+```
 
+Also, in our views let's make the following change for all
+ 
+ ```py
+ from rest_framework_simplejwt.authentication import JWTAuthentication
+ 
+ class StudentList(APIView):
+    
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [AdminOrTeacherOnly]
 
+    def get(self, _, format=None):
+      ...
+ ```
+
+ Then, send a POST request to `/account/api/token/` with username and password to get access token and refresh token
+ 
+ <img width="600" alt="Screen Shot 2021-10-24 at 1 06 36 PM" src="https://user-images.githubusercontent.com/31994778/138589387-df3db37c-5974-44f2-9f6c-e5e450ae9b98.png">
+
+ Now, let's use the access token in one of our endpoints:
+ 
+ <img width="600" alt="Screen Shot 2021-10-24 at 1 08 28 PM" src="https://user-images.githubusercontent.com/31994778/138589428-adcbf556-bd39-4de1-8e89-348874f118ab.png">
+
+ Note that for JWT tokens, we should use it as `Bearer {{ access token }}`.
+ 
+ However, access token is only valid for 5 minutes. When 5 minutes is due, we will have the following:
+ 
+ <img width="604" alt="Screen Shot 2021-10-24 at 1 12 48 PM" src="https://user-images.githubusercontent.com/31994778/138589516-e133a218-562b-41c2-9aef-333490248535.png">
+ 
+ Then, we need to use refresh token (which is available for 24 hours) to get a new access token.
+ 
+ <img width="600" alt="Screen Shot 2021-10-24 at 1 13 40 PM" src="https://user-images.githubusercontent.com/31994778/138589539-9dff5615-4cdf-4cae-902d-3e68712b99a2.png">
+ 
+ This is a new access token.
+ 
+ ---
+ 
