@@ -2790,5 +2790,188 @@ class Logout(generics.GenericAPIView):
 
 ---
  
+ <h3>JWT</h3>
+ 
+ <b>"JSON Web Token is a fairly new standard which can be used for token-based authentication. Unlike the built-in TokenAuthentication scheme, JWT Authentication doesn't need to use a database to validate a token."</b> [ref](https://www.django-rest-framework.org/api-guide/authentication/)
+ 
+ <h4>Why JWT?</h4>
+ 
+ - No need for DB: Using JWT doesn't require server side lookup. This means that in each request we send using JWT, since the authentication token is not stored in the DB, the server doesn't have to look for the authentication token. This comes in handy when we have microservices on our server side acting as a load balancer. If we use session authentication, each server side microservice would have a different session and the user needs to authenticate again and again when a different microservice is used.
+ 
+ - No need to regenerate token for different servers: Imagine that we have a web app for a banking site. On the background we have different servers and we don't want our users to login again and again for reaching to different servers.
+ 
+ <img width="399" alt="Screen Shot 2021-10-23 at 5 27 02 PM" src="https://user-images.githubusercontent.com/31994778/138560566-a886285b-e328-4f38-8453-4a3ea1a422fe.png">
+ 
+ Here, we have `Bank` and `Retirement` servers. If we use session based authentication, then our users have to relogin(re-authenticate) for displaying features of these servers. This is due to the fact that one server's session wouldn't be recognized by the other because in each session, the related server will generate a session in server memory and when our users want to display content from the other server this session will not match and they have to relogin for that server to generate a session. [ref](https://www.youtube.com/watch?v=7Q17ubqLfaM)
+ 
+ Session based authentication is displayed as follows:
+ 
+ <img width="670" alt="Screen Shot 2021-10-23 at 4 57 59 PM" src="https://user-images.githubusercontent.com/31994778/138560731-367bb22e-c98d-47a2-a6a1-cd3c9c9d38d5.png">
+ 
+ <h4>Structure of JWT</h4>
+ 
+ JWT has three main parts, i.e., `Header`, `Payload` and `Signature`.
+ 
+ <h4>Header</h4>
+ 
+ <img width="573" alt="Screen Shot 2021-10-23 at 5 36 19 PM" src="https://user-images.githubusercontent.com/31994778/138560830-f82371d7-7adf-4d42-a7f6-9d3b237033fc.png">
+ 
+ <b>"The header typically consists of two parts: the type of the token, which is JWT, and the signing algorithm being used, such as HMAC SHA256 or RSA."</b> [ref](https://jwt.io/introduction)
+ 
+ For example:
+ 
+ ```js
+ {
+  "alg": "HS256",
+  "typ": "JWT"
+}
+ ```
+ 
+ Then, this JSON is <b>Base64Url encoded</b> to form the first part of the JWT.
+
+ <h4>Payload</h4>
+ 
+ <b>"The second part of the token is the payload, which contains the claims. Claims are statements about an entity (typically, the user) and additional data. There are three types of claims: registered, public, and private claims."</b>
+ 
+ An example payload could be:
+ 
+ ```js
+ {
+  "sub": "1234567890",
+  "name": "John Doe",
+  "admin": true
+}
+ ```
+ 
+ The payload is then <b>Base64Url encoded</b> to form the second part of the JSON Web Token.
+ 
+ <h4>Signature</h4>
+ 
+ The signature might be the most important part of the JWT structure. It is the part that lets the server recognize client.
+ 
+ The signature consists of Base64Url encoded version of the header and the payload. Also, the `secret`, which is only known by the server, is added to this composition and the signing algorithm, in our case HS256 -> Hash-based Message Authentication Code using SHA-256 hashing function, is used to create the signature. [ref](https://docs.microsoft.com/en-us/dotnet/api/system.security.cryptography.hmacsha256?view=net-5.0)
+ 
+ To be concise, signature is created as follows:
+ 
+ ```js
+ HMACSHA256(
+  base64UrlEncode(header) + "." +
+  base64UrlEncode(payload),
+  secret)
+ ```
+ 
+ The signature is used to make sure that the client didn't change anything on the get-go.
+ 
+ For example, we used the above header and the above payload to create the signature as:
+ 
+ `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c`
+ 
+ If something's changed on the client side, then the signature is also changed and the server now knows that the signatures do not match and restricts access to the client.
+ 
+ <img width="288" alt="Screen Shot 2021-10-23 at 5 57 17 PM" src="https://user-images.githubusercontent.com/31994778/138561483-490e12eb-f01c-44c7-bde7-ba3c668196ef.png">
+
+ But if the client doesn't change anything, then the server matches the signature and knows that everything is okay and permits access.
+ 
+ <img width="315" alt="Screen Shot 2021-10-23 at 5 57 03 PM" src="https://user-images.githubusercontent.com/31994778/138561503-2857666e-96b0-41de-9020-3b7e235fc404.png">
+
+Here, the most important thing is that we need to make sure our `secret` is protected well enough so that intruders wouldn't have access to it. If they have access to the `secret`, then they can fake it and create a signature and send requests successfully.
+ 
+ <img width="572" alt="Screen Shot 2021-10-23 at 5 58 37 PM" src="https://user-images.githubusercontent.com/31994778/138561606-e07d87e8-911d-4621-b655-bf2c905f4432.png">
+
+ JWT based authentication is displayed as follows: 
+ 
+ <img width="665" alt="Screen Shot 2021-10-23 at 4 57 49 PM" src="https://user-images.githubusercontent.com/31994778/138561664-df4c4146-d37f-4211-a7c2-3f53f06d80c6.png">
+
+ ---
+ 
+ <h3>Changing Our Project with JWT</h3>
+ 
+Under `user_app.api`, inside urls.py, let's add the url patterns:
+ 
+```py
+from django.urls import path
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+
+urlpatterns = [
+    ...,
+    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+]
+```
+
+Also, in our views let's make the following change for all
+ 
+ ```py
+ from rest_framework_simplejwt.authentication import JWTAuthentication
+ 
+ class StudentList(APIView):
+    
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [AdminOrTeacherOnly]
+
+    def get(self, _, format=None):
+      ...
+ ```
+
+ Then, send a POST request to `/account/api/token/` with username and password to get access token and refresh token
+ 
+ <img width="600" alt="Screen Shot 2021-10-24 at 1 06 36 PM" src="https://user-images.githubusercontent.com/31994778/138589387-df3db37c-5974-44f2-9f6c-e5e450ae9b98.png">
+
+ Now, let's use the access token in one of our endpoints:
+ 
+ <img width="600" alt="Screen Shot 2021-10-24 at 1 08 28 PM" src="https://user-images.githubusercontent.com/31994778/138589428-adcbf556-bd39-4de1-8e89-348874f118ab.png">
+
+ Note that for JWT tokens, we should use it as `Bearer {{ access token }}`.
+ 
+ However, access token is only valid for 5 minutes. When 5 minutes is due, we will have the following:
+ 
+ <img width="604" alt="Screen Shot 2021-10-24 at 1 12 48 PM" src="https://user-images.githubusercontent.com/31994778/138589516-e133a218-562b-41c2-9aef-333490248535.png">
+ 
+ Then, we need to use refresh token (which is available for 24 hours) to get a new access token.
+ 
+ <img width="600" alt="Screen Shot 2021-10-24 at 1 13 40 PM" src="https://user-images.githubusercontent.com/31994778/138589539-9dff5615-4cdf-4cae-902d-3e68712b99a2.png">
+ 
+ This is a new access token.
+ 
+ ---
+ 
+ <h3>Handling Registration</h3>
+ 
+ We can refer [here](https://django-rest-framework-simplejwt.readthedocs.io/en/latest/creating_tokens_manually.html) for handling registration.
+ 
+ The only thing we need to do is to go to `user_app.api.serializers` and make the following changes:
+ 
+ ```py
+...
+from rest_framework_simplejwt.tokens import RefreshToken
+
+
+class RegisterSerializer(serializers.ModelSerializer):
+    ...
+
+    def create(self, validated_data):
+        ...
+        ...
+        refresh_token = str(RefreshToken.for_user(user))
+        access_token = str(RefreshToken.for_user(user).access_token)
+        validated_data['token'] = {
+            "refresh": refresh_token, "access": access_token}
+        return validated_data
+```
+ 
+ After this, let's register.
+ 
+ <img width="600" alt="Screen Shot 2021-10-24 at 6 56 03 PM" src="https://user-images.githubusercontent.com/31994778/138602066-2e541e83-d4b3-4706-afd1-e28cf33c1d33.png">
+ 
+<img width="600" alt="Screen Shot 2021-10-24 at 6 56 29 PM" src="https://user-images.githubusercontent.com/31994778/138602076-f3fcad5d-4f3e-4bd9-812c-28dc16543ffc.png">
+
+ And then, send a request.
+ 
+ <img width="600" alt="Screen Shot 2021-10-24 at 6 57 44 PM" src="https://user-images.githubusercontent.com/31994778/138602097-ff2fc75c-119c-4652-a24c-292f6ebd265e.png">
+ 
+ ---
+ 
+ 
  
 
+ 
