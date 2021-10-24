@@ -2935,3 +2935,43 @@ Also, in our views let's make the following change for all
  
  ---
  
+ <h3>Handling Registration</h3>
+ 
+ We can refer [here](https://django-rest-framework-simplejwt.readthedocs.io/en/latest/creating_tokens_manually.html) for handling registration.
+ 
+ The only thing we need to do is to go to `user_app.api.serializers` and make the following changes:
+ 
+ ```py
+...
+from rest_framework_simplejwt.tokens import RefreshToken
+
+
+class RegisterSerializer(serializers.ModelSerializer):
+    ...
+
+    def create(self, validated_data):
+        ...
+        ...
+        refresh_token = str(RefreshToken.for_user(user))
+        access_token = str(RefreshToken.for_user(user).access_token)
+        validated_data['token'] = {
+            "refresh": refresh_token, "access": access_token}
+        return validated_data
+```
+ 
+ After this, let's register.
+ 
+ <img width="600" alt="Screen Shot 2021-10-24 at 6 56 03 PM" src="https://user-images.githubusercontent.com/31994778/138602066-2e541e83-d4b3-4706-afd1-e28cf33c1d33.png">
+ 
+<img width="600" alt="Screen Shot 2021-10-24 at 6 56 29 PM" src="https://user-images.githubusercontent.com/31994778/138602076-f3fcad5d-4f3e-4bd9-812c-28dc16543ffc.png">
+
+ And then, send a request.
+ 
+ <img width="600" alt="Screen Shot 2021-10-24 at 6 57 44 PM" src="https://user-images.githubusercontent.com/31994778/138602097-ff2fc75c-119c-4652-a24c-292f6ebd265e.png">
+ 
+ ---
+ 
+ 
+ 
+
+ 
