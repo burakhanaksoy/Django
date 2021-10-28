@@ -10,8 +10,7 @@ from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework import authentication, permissions
 
 from api.permissions import AdminOrTeacherOnly
-
-
+from rest_framework_simplejwt.authentication import JWTAuthentication
 class StudentList(APIView):
     """
     Method: POST,
@@ -23,7 +22,8 @@ class StudentList(APIView):
         "teacher": 1 (PK of the Teacher)
         }
     """
-    authentication_classes = [authentication.TokenAuthentication]
+    
+    authentication_classes = [JWTAuthentication]
     permission_classes = [AdminOrTeacherOnly]
 
     def get(self, _, format=None):

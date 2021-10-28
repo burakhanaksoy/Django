@@ -78,15 +78,6 @@ class StudentPostSerializer(StudentSimpleSerializer):
         fields = '__all__'
 
 
-class StudentTeacherDiscardedSerializer(StudentSimpleSerializer):
-
-    class Meta:
-        model = Student
-        read_only_fields = ['student_id']
-        # fields = '__all__'
-        exclude = ["teacher"]
-
-
 class StudentSerializerUpdate(StudentSimpleSerializer):
     """
         Customized serializer. Use this for only displaying purpose.
@@ -160,13 +151,7 @@ class StudentDetailSerializerWithTeacherFieldSerializer(StudentDetailSerializer)
 
 
 class TeacherWithStudentFieldSerializer(serializers.ModelSerializer):
-    # teacher_student = StudentListSerializer(many=True, read_only=True)
-    # students = serializers.SerializerMethodField()
-    student = StudentTeacherDiscardedSerializer()
 
     class Meta:
         model = Teacher
         fields = '__all__'
-
-    # def get_students(self, object):
-    #     return object

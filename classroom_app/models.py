@@ -16,7 +16,7 @@ class Student(models.Model):
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
     age = models.IntegerField()
-    teacher = models.OneToOneField(Teacher, primary_key=True,
+    teacher = models.ForeignKey(Teacher,
                                    on_delete=models.DO_NOTHING, related_name='student')
 
     def __str__(self):

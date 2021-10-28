@@ -8,23 +8,21 @@ from classroom_app.errors import return_400_with_error_log, return_404_with_erro
 import logging
 from api.permissions import AdminOrTeacherOnly
 from rest_framework import authentication
-
+from rest_framework_simplejwt.authentication import JWTAuthentication
 
 class TeacherList(APIView):
     """
     List all teachers, or create a new teacher.
     """
 
-    authentication_classes = (authentication.TokenAuthentication,)
-    permission_classes = (AdminOrTeacherOnly,)
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [AdminOrTeacherOnly]
 
     def get(self, request, format=None):
         teachers = Teacher.objects.all()
         data = TeacherWithStudentFieldSerializer(teachers, many=True).data
-        result = dict()
-        result['result'] = data
-        if result['result']:
-            return Response(result, status=status.HTTP_200_OK)
+        if data:
+            return Response(data, status=status.HTTP_200_OK)
         else:
             return Response(None, status=status.HTTP_204_NO_CONTENT)
 

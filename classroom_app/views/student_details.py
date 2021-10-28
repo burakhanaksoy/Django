@@ -13,7 +13,7 @@ from rest_framework import viewsets
 from rest_framework import authentication, permissions
 
 from api.permissions import AdminOrRelatedTeacherOnly, AdminOnly
-
+from rest_framework_simplejwt.authentication import JWTAuthentication
 
 class StudentDetailView(viewsets.ModelViewSet):
     """
@@ -36,7 +36,7 @@ class StudentDetailView(viewsets.ModelViewSet):
         }
     ]
     """
-    authentication_classes = [authentication.TokenAuthentication]
+    authentication_classes = [JWTAuthentication]
     permission_classes = [AdminOrRelatedTeacherOnly]
     queryset = StudentDetail.objects.all()
     serializer_class = StudentDetailSerializer

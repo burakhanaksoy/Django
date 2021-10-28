@@ -8,12 +8,12 @@ from api.permissions import AdminOrRelatedTeacherOnly
 from rest_framework import authentication
 from rest_framework.response import Response
 from rest_framework import status
-
+from rest_framework_simplejwt.authentication import JWTAuthentication
 
 class AddGradeView(generics.UpdateAPIView):
 
     serializer_class = StudentDetailPostGradeSerializer
-    authentication_classes = [authentication.TokenAuthentication]
+    authentication_classes = [JWTAuthentication]
     permission_classes = [AdminOrRelatedTeacherOnly]
 
     def get_queryset(self):

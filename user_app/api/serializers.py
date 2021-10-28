@@ -3,6 +3,8 @@ from django.contrib.auth.models import User
 from rest_framework.validators import UniqueValidator
 from django.contrib.auth.password_validation import validate_password
 from rest_framework.authtoken.models import Token
+from rest_framework_simplejwt.tokens import RefreshToken
+
 
 class RegisterSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(
@@ -16,7 +18,8 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('username', 'email', 'password', 'password2', 'first_name', 'last_name')
+        fields = ('username', 'email', 'password',
+                  'password2', 'first_name', 'last_name')
         extra_kwargs = {
             'first_name': {'required': True},
             'last_name': {'required': True}
@@ -41,5 +44,9 @@ class RegisterSerializer(serializers.ModelSerializer):
         user.save()
         validated_data.pop('password')
         validated_data.pop('password2')
-        validated_data['token'] = Token.objects.get(user=user).key
+        # validated_data['token'] = Token.objects.get(user=user).key
+        refresh_token = str(RefreshToken.for_user(user))
+        access_token = str(RefreshToken.for_user(user).access_token)
+        validated_data['token'] = {
+            "refresh": refresh_token, "access": access_token}
         return validated_data
