@@ -140,7 +140,8 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.TokenAuthentication'
-    ]
+    ],
+    'TEST_REQUEST_DEFAULT_FORMAT': 'json'
     # 'DEFAULT_AUTHENTICATION_CLASSES': [
     #     'rest_framework.authentication.BasicAuthentication'
     # ]
@@ -174,8 +175,8 @@ INTERNAL_IPS = [
     '127.0.0.1',
 ]
 
-REST_FRAMEWORK = {
-    'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.IsAuthenticatedOrReadOnly',
-    ]
-}
+# REST_FRAMEWORK = {
+#     'DEFAULT_PERMISSION_CLASSES': [
+#         'rest_framework.permissions.IsAuthenticatedOrReadOnly',
+#     ]
+# }
