@@ -8,8 +8,19 @@
       "name": "Python: Django",
       "type": "python",
       "request": "launch",
-      "program": "${workspaceFolder}/manage.py",
+      "program": "${workspaceFolder}/app/manage.py",
       "args": ["runserver", "8081"],
+      "django": true
+    },
+    {
+      "name": "test-user-app",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/app/manage.py",
+      "args": [
+        "test",
+        "user_app.tests"
+      ],
       "django": true
     }
   ]
