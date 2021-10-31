@@ -36,6 +36,7 @@
 [Permissions](#permissions)
 [Custom Calculations](#custom-calculations)
 [Authentication](#authentication)
+[Unit Tests](#unit-tests)
 
 ---
 
@@ -2971,7 +2972,104 @@ class RegisterSerializer(serializers.ModelSerializer):
  
  ---
  
+ <p id = "unit-tests">
+  <h2>
+  Unit Tests
+ </h2>
+ </p>
  
+ Now that we finished most of our project. We can start introducing unit tests.
  
+ One thing to remember is that <b>Each app should have their own testing module</b>.
+ 
+ Let's start by writing unit tests for our `user_app`, which handles registeration, login, and logout features.
+ 
+ <h4>Refactoring our project structure</h4>
+ 
+ ```
+Project
+├── app
+│   ├── __init__.py
+│   ├── ... # Here we have other apps and some related files
+│   ├── ...
+│   ├── ...
+│   └── user_app # This is the app which we want to write UTs
+│       ├── __init__.py
+│       ├── admin.py
+│       ├── api
+│       │   ├── serializers.py
+│       │   └── urls.py
+│       ├── apps.py
+│       ├── migrations
+│       ├── models.py
+│       ├── tests # This is our test module 
+│       │   ├── __init__.py
+│       │   ├── test_login.py
+│       │   ├── test_logout.py
+│       │   └── test_register.py
+│       └── views
+│           ├── __init__.py
+│           ├── logout.py
+│           └── register.py
+├── django_env
+│   
+├── requirements.txt
+```
 
- 
+We refactor our project like this. We need to emphasize once again that <b>Each app should have their own testing module.</b>
+
+<img width="348" alt="Screen Shot 2021-10-31 at 11 01 01 AM" src="https://user-images.githubusercontent.com/31994778/139573832-c5a91ba6-0bfc-43ab-9e33-2e6a9a30beaa.png">
+
+Inside our `user_app`, we have such structure:
+
+<img width="193" alt="Screen Shot 2021-10-31 at 11 04 23 AM" src="https://user-images.githubusercontent.com/31994778/139573905-9319f9cb-eac1-40ae-b649-fb3fb5819de8.png">
+
+We created a `tests` module which consists of our unit test suites.
+
+Inside `tests` module:
+
+<img width="192" alt="Screen Shot 2021-10-31 at 11 06 59 AM" src="https://user-images.githubusercontent.com/31994778/139573958-e6219abe-37ad-40e9-b731-5bb3ba964ce2.png">
+
+Now that we re-structured our project, we can dive deep into writing our unit tests.
+
+---
+
+<h3>Testing Registration</h3>
+
+Registration is an important part of our app. As we previously mentioned, our `register.py` view in `user_app` app handles the following:
+
+- Registering a new user with the following conditions:
+    
+    - Each user should have a <b>unique email</b>
+    - Each user should have a <b>unique username</b>
+    - Entered passwords should match
+    - Registered user cannot register again
+
+We need to test these requirements.
+
+```py
+from django.contrib.auth.models import User
+from rest_framework.test import APITestCase
+from rest_framework.test import APIClient
+from django.urls import reverse
+import json
+
+expected_responses = {...} # this dict contains the responses we expect for different test cases
+
+class TestAccountCreate(APITestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.url = ''
+        
+    ... # other test cases that we have comes here
+    
+```
+
+Before diving into the actual code, let's mention the classes that we imported.
+
+<h4>User Class from django.contrib.auth.models</h4>
+
+User class of django.contrib.auth.models is the class that Django has for managing users.
+
+For example, creating a super user, creating staff users, creating normal users. All happens with this class.
+
