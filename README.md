@@ -37,6 +37,7 @@
 [Custom Calculations](#custom-calculations)
 [Authentication](#authentication)
 [Unit Tests](#unit-tests)
+[Running Our Tests Through VSCode](#vs-code-integration)
 
 ---
 
@@ -3177,4 +3178,73 @@ Then, we try to register a user with the same username, `test_user`. We expect 4
 
 ---
 
+<p id="vs-code-integration">
+<h2>Running Our Tests Through VSCode</h2>
+</p>
+
+Using VSCode for running our tests is just awesome. It makes our job easier.
+
+On the debugger, when I click on this:
+
+<img width="348" alt="Screen Shot 2021-10-31 at 3 34 25 PM" src="https://user-images.githubusercontent.com/31994778/139583435-0df73ebc-cb07-4b67-b669-89e2138a21f1.png">
+
+I get:
+
+<img width="493" alt="Screen Shot 2021-10-31 at 3 35 33 PM" src="https://user-images.githubusercontent.com/31994778/139583467-9c33ef82-427f-4c6e-b8dd-0cf1baa1a8af.png">
+
+Awesome. So, let's do the configuration to realize this.
+
+Under `.vscode` folder, we have `settings.json` and `launch.json`.
+
+<img width="350" alt="Screen Shot 2021-10-31 at 3 36 21 PM" src="https://user-images.githubusercontent.com/31994778/139583527-4b86642e-b2a7-4709-a171-96fca14db586.png">
+
+Under settings.json, let's use this configuration:
+
+```js
+{
+    "python.pythonPath": "/usr/local/bin/python3",
+    "python.testing.unittestArgs": [
+        "-v",
+        "-s",
+        "./app/user_app/tests",  # This is the directory pointing to our test module
+        "-p",
+        "test_*.py"  # This will run every test file starting with "test_"
+    ],
+    "python.testing.pytestEnabled": false,
+    "python.testing.nosetestsEnabled": false,
+    "python.testing.unittestEnabled": true
+}
+```
+
+This is the configuration for our test runner, which is `unittest`.
+
+Then, let's configure VSCode debugger, under `launch.json`:
+
+```js
+{
+  "version": ...
+  "configurations": [
+     ...,
+    {
+      "name": "test-user-app",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/app/manage.py",
+      "args": [
+        "test",
+        "user_app.tests"
+      ],
+      "django": true
+    }
+  ]
+}
+```
+
+This creates our debugger.
+
+Which makes it available on the bottom left corner as:
+
+<img width="641" alt="Screen Shot 2021-10-31 at 3 44 04 PM" src="https://user-images.githubusercontent.com/31994778/139583907-1d60df08-cada-4ce4-9343-61aede2b9640.png">
+
+---
 
