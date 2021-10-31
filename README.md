@@ -3073,3 +3073,108 @@ User class of django.contrib.auth.models is the class that Django has for managi
 
 For example, creating a super user, creating staff users, creating normal users. All happens with this class.
 
+We use this class for our tests to verify that a token is generated for the registered user.
+
+<h4>APITestCase Class from rest_framework.test</h4>
+
+<a href="https://www.django-rest-framework.org/api-guide/testing/#api-test-cases">
+<img width="600" alt="Screen Shot 2021-10-31 at 3 03 03 PM" src="https://user-images.githubusercontent.com/31994778/139582137-178656fe-a120-4b6c-9e03-72a4909bd871.png">
+</a>
+
+APITestCase class inherits from TestCase class, which has the necessary methods and properties for creating a test suite.
+
+<h4>APIClient</h4>
+
+APIClient is the client, just like Postman, to make requests. It supports the HTTP methods such as `GET`, `POST`, `PUT`, `PATCH`, `DELETE`.
+
+<h4>reverse</h4>
+
+Reverse is used for fetching the related endpoint to test.
+
+Using reverse, we can fetch the related endpoint through endpoint's `name`, as follows:
+
+<img width="440" alt="Screen Shot 2021-10-31 at 3 13 39 PM" src="https://user-images.githubusercontent.com/31994778/139582765-cd747fb3-4339-4215-a358-4f3a659ddd91.png">
+
+---
+
+<h3>Testing Registration</h3>
+
+Now, we are ready to test registration.
+
+```py
+class TestAccountCreate(APITestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.url = ''
+
+    def test_user_create(self):
+        self.url = reverse('register')
+        data = {
+            "username": "test_user",
+            "email": "test@test.com",
+            "password": "testtest1234",
+            "password2": "testtest1234",
+            "first_name": "test",
+            "last_name": "test"
+        }
+        response = self.client.post(self.url, data=data, format='json')
+        generated_token = response.data.pop('token')
+
+        expected_result = expected_responses.get('user_create_success')
+
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data, expected_result)
+        self.assertIsNotNone(generated_token)
+```
+
+In this test suite, we have total of 7 cases, all of which starts with `def test_*`.
+
+`setUp` method is run before each test case execution.
+
+We write test case names verbosely, meaning that they should be clear and definitive of what they are supposed to do.
+
+Here, we send a success case, i.e., successfully registering a user. For that we have `data` dict. We get the response by sending a POST request with the client, get generated_token for that user and make assertions.
+
+Here, we test 3 things:
+
+- Returned status code is 201.
+- response.data equals the expected result.
+- generated token is not None.
+
+Let's make another test case.
+
+```py
+def test_user_create_same_username_different_email_error(self):
+        User.objects.create(username="test_user")
+
+        self.url = reverse('register')
+        data = {
+            "username": "test_user",
+            "email": "test1@test.com",
+            "password": "testtest1234",
+            "password2": "testtest1234",
+            "first_name": "test",
+            "last_name": "test"
+        }
+        response = self.client.post(self.url, data=data, format='json')
+
+        expected_result = json.dumps(expected_responses.get(
+            'same_username_different_email_error'))
+
+        result = json.dumps(response.data)
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(result, expected_result)
+```
+
+Here, test case name is very verbose, which is okay, `test_user_create_same_username_different_email_error`.
+
+It tels us what this test case is about, <b>testing registration of the same username but email is different</b>.
+
+By default, APITestCase flushes the DB, so the first test case's created user is flushed after first test case is executed. That's why we run `User.objects.create(username="test_user")` at the beginning of this test case.
+
+Then, we try to register a user with the same username, `test_user`. We expect 400 response and make the necessary assertions.
+
+---
+
+
