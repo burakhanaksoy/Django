@@ -36,6 +36,8 @@
 [Permissions](#permissions)
 [Custom Calculations](#custom-calculations)
 [Authentication](#authentication)
+[Unit Tests](#unit-tests)
+[Running Our Tests Through VSCode](#vs-code-integration)
 
 ---
 
@@ -2971,7 +2973,278 @@ class RegisterSerializer(serializers.ModelSerializer):
  
  ---
  
+ <p id = "unit-tests">
+  <h2>
+  Unit Tests
+ </h2>
+ </p>
  
+ Now that we finished most of our project. We can start introducing unit tests.
  
+ One thing to remember is that <b>Each app should have their own testing module</b>.
+ 
+ Let's start by writing unit tests for our `user_app`, which handles registeration, login, and logout features.
+ 
+ <h4>Refactoring our project structure</h4>
+ 
+ ```
+Project
+├── app
+│   ├── __init__.py
+│   ├── ... # Here we have other apps and some related files
+│   ├── ...
+│   ├── ...
+│   └── user_app # This is the app which we want to write UTs
+│       ├── __init__.py
+│       ├── admin.py
+│       ├── api
+│       │   ├── serializers.py
+│       │   └── urls.py
+│       ├── apps.py
+│       ├── migrations
+│       ├── models.py
+│       ├── tests # This is our test module 
+│       │   ├── __init__.py
+│       │   ├── test_login.py
+│       │   ├── test_logout.py
+│       │   └── test_register.py
+│       └── views
+│           ├── __init__.py
+│           ├── logout.py
+│           └── register.py
+├── django_env
+│   
+├── requirements.txt
+```
 
- 
+We refactor our project like this. We need to emphasize once again that <b>Each app should have their own testing module.</b>
+
+<img width="348" alt="Screen Shot 2021-10-31 at 11 01 01 AM" src="https://user-images.githubusercontent.com/31994778/139573832-c5a91ba6-0bfc-43ab-9e33-2e6a9a30beaa.png">
+
+Inside our `user_app`, we have such structure:
+
+<img width="193" alt="Screen Shot 2021-10-31 at 11 04 23 AM" src="https://user-images.githubusercontent.com/31994778/139573905-9319f9cb-eac1-40ae-b649-fb3fb5819de8.png">
+
+We created a `tests` module which consists of our unit test suites.
+
+Inside `tests` module:
+
+<img width="192" alt="Screen Shot 2021-10-31 at 11 06 59 AM" src="https://user-images.githubusercontent.com/31994778/139573958-e6219abe-37ad-40e9-b731-5bb3ba964ce2.png">
+
+Now that we re-structured our project, we can dive deep into writing our unit tests.
+
+---
+
+<h3>Testing Registration</h3>
+
+Registration is an important part of our app. As we previously mentioned, our `register.py` view in `user_app` app handles the following:
+
+- Registering a new user with the following conditions:
+    
+    - Each user should have a <b>unique email</b>
+    - Each user should have a <b>unique username</b>
+    - Entered passwords should match
+    - Registered user cannot register again
+
+We need to test these requirements.
+
+```py
+from django.contrib.auth.models import User
+from rest_framework.test import APITestCase
+from rest_framework.test import APIClient
+from django.urls import reverse
+import json
+
+expected_responses = {...} # this dict contains the responses we expect for different test cases
+
+class TestAccountCreate(APITestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.url = ''
+        
+    ... # other test cases that we have comes here
+    
+```
+
+Before diving into the actual code, let's mention the classes that we imported.
+
+<h4>User Class from django.contrib.auth.models</h4>
+
+User class of django.contrib.auth.models is the class that Django has for managing users.
+
+For example, creating a super user, creating staff users, creating normal users. All happens with this class.
+
+We use this class for our tests to verify that a token is generated for the registered user.
+
+<h4>APITestCase Class from rest_framework.test</h4>
+
+<a href="https://www.django-rest-framework.org/api-guide/testing/#api-test-cases">
+<img width="600" alt="Screen Shot 2021-10-31 at 3 03 03 PM" src="https://user-images.githubusercontent.com/31994778/139582137-178656fe-a120-4b6c-9e03-72a4909bd871.png">
+</a>
+
+APITestCase class inherits from TestCase class, which has the necessary methods and properties for creating a test suite.
+
+<h4>APIClient</h4>
+
+APIClient is the client, just like Postman, to make requests. It supports the HTTP methods such as `GET`, `POST`, `PUT`, `PATCH`, `DELETE`.
+
+<h4>reverse</h4>
+
+Reverse is used for fetching the related endpoint to test.
+
+Using reverse, we can fetch the related endpoint through endpoint's `name`, as follows:
+
+<img width="440" alt="Screen Shot 2021-10-31 at 3 13 39 PM" src="https://user-images.githubusercontent.com/31994778/139582765-cd747fb3-4339-4215-a358-4f3a659ddd91.png">
+
+---
+
+<h3>Testing Registration</h3>
+
+Now, we are ready to test registration.
+
+```py
+class TestAccountCreate(APITestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.url = ''
+
+    def test_user_create(self):
+        self.url = reverse('register')
+        data = {
+            "username": "test_user",
+            "email": "test@test.com",
+            "password": "testtest1234",
+            "password2": "testtest1234",
+            "first_name": "test",
+            "last_name": "test"
+        }
+        response = self.client.post(self.url, data=data, format='json')
+        generated_token = response.data.pop('token')
+
+        expected_result = expected_responses.get('user_create_success')
+
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data, expected_result)
+        self.assertIsNotNone(generated_token)
+```
+
+In this test suite, we have total of 7 cases, all of which starts with `def test_*`.
+
+`setUp` method is run before each test case execution.
+
+We write test case names verbosely, meaning that they should be clear and definitive of what they are supposed to do.
+
+Here, we send a success case, i.e., successfully registering a user. For that we have `data` dict. We get the response by sending a POST request with the client, get generated_token for that user and make assertions.
+
+Here, we test 3 things:
+
+- Returned status code is 201.
+- response.data equals the expected result.
+- generated token is not None.
+
+Let's make another test case.
+
+```py
+def test_user_create_same_username_different_email_error(self):
+        User.objects.create(username="test_user")
+
+        self.url = reverse('register')
+        data = {
+            "username": "test_user",
+            "email": "test1@test.com",
+            "password": "testtest1234",
+            "password2": "testtest1234",
+            "first_name": "test",
+            "last_name": "test"
+        }
+        response = self.client.post(self.url, data=data, format='json')
+
+        expected_result = json.dumps(expected_responses.get(
+            'same_username_different_email_error'))
+
+        result = json.dumps(response.data)
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(result, expected_result)
+```
+
+Here, test case name is very verbose, which is okay, `test_user_create_same_username_different_email_error`.
+
+It tels us what this test case is about, <b>testing registration of the same username but email is different</b>.
+
+By default, APITestCase flushes the DB, so the first test case's created user is flushed after first test case is executed. That's why we run `User.objects.create(username="test_user")` at the beginning of this test case.
+
+Then, we try to register a user with the same username, `test_user`. We expect 400 response and make the necessary assertions.
+
+---
+
+<p id="vs-code-integration">
+<h2>Running Our Tests Through VSCode</h2>
+</p>
+
+Using VSCode for running our tests is just awesome. It makes our job easier.
+
+On the debugger, when I click on this:
+
+<img width="348" alt="Screen Shot 2021-10-31 at 3 34 25 PM" src="https://user-images.githubusercontent.com/31994778/139583435-0df73ebc-cb07-4b67-b669-89e2138a21f1.png">
+
+I get:
+
+<img width="493" alt="Screen Shot 2021-10-31 at 3 35 33 PM" src="https://user-images.githubusercontent.com/31994778/139583467-9c33ef82-427f-4c6e-b8dd-0cf1baa1a8af.png">
+
+Awesome. So, let's do the configuration to realize this.
+
+Under `.vscode` folder, we have `settings.json` and `launch.json`.
+
+<img width="350" alt="Screen Shot 2021-10-31 at 3 36 21 PM" src="https://user-images.githubusercontent.com/31994778/139583527-4b86642e-b2a7-4709-a171-96fca14db586.png">
+
+Under settings.json, let's use this configuration:
+
+```js
+{
+    "python.pythonPath": "/usr/local/bin/python3",
+    "python.testing.unittestArgs": [
+        "-v",
+        "-s",
+        "./app/user_app/tests",  # This is the directory pointing to our test module
+        "-p",
+        "test_*.py"  # This will run every test file starting with "test_"
+    ],
+    "python.testing.pytestEnabled": false,
+    "python.testing.nosetestsEnabled": false,
+    "python.testing.unittestEnabled": true
+}
+```
+
+This is the configuration for our test runner, which is `unittest`.
+
+Then, let's configure VSCode debugger, under `launch.json`:
+
+```js
+{
+  "version": ...
+  "configurations": [
+     ...,
+    {
+      "name": "test-user-app",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/app/manage.py",
+      "args": [
+        "test",
+        "user_app.tests"
+      ],
+      "django": true
+    }
+  ]
+}
+```
+
+This creates our debugger.
+
+Which makes it available on the bottom left corner as:
+
+<img width="641" alt="Screen Shot 2021-10-31 at 3 44 04 PM" src="https://user-images.githubusercontent.com/31994778/139583907-1d60df08-cada-4ce4-9343-61aede2b9640.png">
+
+---
+
