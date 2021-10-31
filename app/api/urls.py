@@ -10,8 +10,8 @@ router = DefaultRouter()
 router.register(r'details', StudentDetailView, basename='StudentDetail')
 
 urlpatterns = [
-    path('students/', StudentList.as_view()),
-    path('students/<int:pk>/', StudentDetails.as_view()),
+    path('students/', StudentList.as_view(), name='students'),
+    path('students/<int:pk>/', StudentDetails.as_view(), name='students-pk'),
 
     path('students/', include(router.urls)),
     # path('students/details/', StudentDetailList.as_view()),

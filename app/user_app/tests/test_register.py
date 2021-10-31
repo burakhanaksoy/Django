@@ -40,10 +40,7 @@ class TestAccountCreate(APITestCase):
             "last_name": "test"
         }
         response = self.client.post(self.url, data=data, format='json')
-        if response.data.get('token'):
-            generated_token = response.data.pop('token')
-        else:
-            generated_token = None
+        generated_token = response.data.pop('token')
 
         expected_result = expected_responses.get('user_create_success')
 
