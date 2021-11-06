@@ -17,10 +17,15 @@
       "type": "python",
       "request": "launch",
       "program": "${workspaceFolder}/app/manage.py",
-      "args": [
-        "test",
-        "user_app.tests"
-      ],
+      "args": ["test", "user_app.tests"],
+      "django": true
+    },
+    {
+      "name": "test-classroom-app",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/app/manage.py",
+      "args": ["test", "classroom_app.tests"],
       "django": true
     }
   ]

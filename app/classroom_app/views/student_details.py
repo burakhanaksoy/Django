@@ -1,4 +1,5 @@
-from classroom_app.models import StudentDetail
+from classroom_app.models import StudentDetail, Student
+
 from rest_framework.response import Response
 from rest_framework import status
 from api.serializers import StudentDetailSerializerWithTeacherFieldSerializer, StudentDetailSerializer
@@ -11,7 +12,6 @@ from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
 from rest_framework import viewsets
 from rest_framework import authentication, permissions
-
 from api.permissions import AdminOrRelatedTeacherOnly, AdminOnly
 
 
@@ -42,9 +42,14 @@ class StudentDetailView(viewsets.ModelViewSet):
     serializer_class = StudentDetailSerializer
 
 # Use these if u use viewsets.ViewSet
-    def list(self, request):
+    def list(self, request, pk):
         """Overrides mixins.ListModelMixin list method """
-        serializer = StudentDetailSerializer(StudentDetail.objects.all(), many=True)
+        try:
+            student_detail_obj = StudentDetail.objects.get(pk=pk)
+        except StudentDetail.DoesNotExist:
+            return Response(status=status.HTTP_204_NO_CONTENT)
+            
+        serializer = StudentDetailSerializer(student_detail_obj)
         if not serializer.data:
             return Response(status=status.HTTP_204_NO_CONTENT)
 

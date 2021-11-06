@@ -28,3 +28,7 @@ def validate_age(data):
 
     if not(data > 18 and data < 100):
         raise ValidationError('Age should be between 18-100.')
+
+def validate_age_type(data):
+    if not isinstance(data, int):
+        raise ValidationError('Age should be an integer.')

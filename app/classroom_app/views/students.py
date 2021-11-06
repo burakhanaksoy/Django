@@ -10,6 +10,7 @@ from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework import authentication, permissions
 
 from api.permissions import AdminOrTeacherOnly
+from django.db.utils import IntegrityError
 
 
 class StudentList(APIView):
@@ -42,12 +43,23 @@ class StudentList(APIView):
         serializer = StudentPostSerializer(data=request.data)
 
         if serializer.is_valid():
-            serializer.save()
-            logging.info(f"INFO: Returned 201")
-            logging.info(f'INFO: {request.data} created')
+            error = False
+            msg = ''
+            try:
+                serializer.save()
+            except IntegrityError:
+                error = True
+                msg = "One of the teachers' id does not exist. Cannot create student."
+
+            if error:
+                # data = serializer.data
+                # data['msg'] = msg
+                data = {}
+                data['msg']=msg
+                return Response(data, status=status.HTTP_400_BAD_REQUEST)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
-            return return_400_with_error_log(serializer.errors)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class StudentDetails(APIView):

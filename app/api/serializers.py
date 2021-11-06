@@ -1,10 +1,12 @@
 from django.db.models.fields import CharField
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 from classroom_app.models import Teacher, Student, StudentDetail
 
 from .serializer_functions import apply_validator
 from .serializer_functions import validate_special_char
 from .serializer_functions import validate_age
+from .serializer_functions import validate_age_type
 from .serializer_functions import validate_email
 from classroom_app.models import Student
 
@@ -64,7 +66,11 @@ class StudentListSerializer(StudentSimpleSerializer):
         fields = '__all__'
 
     def get_teacher(self, object):
-        return {"name": f'{object.teacher.first_name} {object.teacher.last_name}', "course": object.teacher.course}
+        if Teacher.objects.all():
+            query_set = Teacher.objects.filter(students__id=object.id)
+            if query_set:
+                return [f"{t.first_name} {t.last_name}_{t.id}" for t in list(query_set)]
+        return "N/A"
 
 
 class StudentPostSerializer(StudentSimpleSerializer):
@@ -72,10 +78,32 @@ class StudentPostSerializer(StudentSimpleSerializer):
         Customized serializer. Use this for only displaying purpose.
     """
 
+    teacher = serializers.ListField(
+        child=serializers.CharField(min_length=1), allow_empty=True, write_only=True, required=False)
+
     class Meta:
         model = Student
         read_only_fields = ['student_id']
-        fields = '__all__'
+        fields = ("first_name", "last_name", "age", "teacher")
+
+    def validate(self, attrs):
+        temp_dict = {k: v for k, v in attrs.items() if k != "teacher"}
+        apply_validator(validate_special_char, temp_dict)
+
+        teacher_ids = attrs.get('teacher')
+        if teacher_ids is not None and teacher_ids:
+            teacher_id_list = [str(t.id) for t in list(Teacher.objects.all())]
+            for id in teacher_ids:
+                if not id in teacher_id_list:
+                    raise ValidationError(
+                        detail="One of the teachers' id does not exist. Cannot create student.")
+
+        is_duplicate = Student.objects.filter(first_name=attrs.get(
+            'first_name')).filter(last_name=attrs.get('last_name')).filter(age=attrs.get('age'))
+        if is_duplicate:
+            raise ValidationError(detail="Duplicate student.")
+
+        return attrs
 
 
 class StudentTeacherDiscardedSerializer(StudentSimpleSerializer):
@@ -101,6 +129,7 @@ class StudentDetailSerializer(serializers.ModelSerializer):
     """
         Student Detail Serializer base.
     """
+    id=serializers.SerializerMethodField()
     name = serializers.SerializerMethodField()
     age = serializers.SerializerMethodField()
     course = serializers.SerializerMethodField()
@@ -110,8 +139,10 @@ class StudentDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = StudentDetail
-        exclude = ['grade_no']
+        exclude = ['grade_no', 'student']
 
+    def get_id(self, object):
+        return object.student.id
     def get_age(self, object):
         return object.student.age
 
@@ -119,10 +150,19 @@ class StudentDetailSerializer(serializers.ModelSerializer):
         return {'first_name': object.student.first_name, 'last_name': object.student.last_name}
 
     def get_course(self, object):
-        return object.student.teacher.course
+        course_list = []
+        if teachers := object.student.teacher.all():
+            for teacher in teachers:
+                course_list.append(teacher.course)
+        return course_list
 
     def get_teacher(self, object):
-        return object.student.teacher.first_name + ' ' + object.student.teacher.last_name
+        teacher_list = []
+        if teachers := object.student.teacher.all():
+            for teacher in teachers:
+                teacher_list.append(teacher.first_name +
+                                    ' ' + teacher.last_name)
+        return teacher_list
 
     def get_grade(self, object):
         return object.grade

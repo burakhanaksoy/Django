@@ -1,5 +1,8 @@
 
 from django.db import models
+from django.utils.functional import empty
+from django.core.validators import MaxValueValidator, MinValueValidator, MinLengthValidator
+
 
 class Teacher(models.Model):
     first_name = models.CharField(max_length=100)
@@ -8,19 +11,21 @@ class Teacher(models.Model):
     course = models.CharField(max_length=100)
 
     def __str__(self):
-        return f'Teacher ID: {self.id}'
+        return f'Teacher {self.first_name}'
 
 
 class Student(models.Model):
-    # id = models.AutoField(primary_key=False)
-    first_name = models.CharField(max_length=100)
-    last_name = models.CharField(max_length=100)
-    age = models.IntegerField()
-    teacher = models.OneToOneField(Teacher, primary_key=True,
-                                   on_delete=models.DO_NOTHING, related_name='student')
+    first_name = models.CharField(
+        validators=[MinLengthValidator(2)], max_length=50)
+    last_name = models.CharField(
+        validators=[MinLengthValidator(2)], max_length=50)
+    age = models.IntegerField(
+        validators=[MinValueValidator(18), MaxValueValidator(55)])
+    teacher = models.ManyToManyField(
+        Teacher, related_name='students', blank=True)
 
     def __str__(self):
-        return f'Student: {self.first_name}'
+        return f'Student {self.first_name}'
 
 
 class StudentDetail(models.Model):
