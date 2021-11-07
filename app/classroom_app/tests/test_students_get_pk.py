@@ -58,3 +58,12 @@ class TestStudentsPost(APITestCase):
         self.assertIn(
             f'test2 test2_{teacher_2.id}', response.data.get('teacher'))
 
+    def test_404_student_not_found(self):
+
+        self.user = User.objects.create_user(username="test")
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get(path=f"{self.url}1/")
+
+        self.assertEqual(response.status_code, 404)
+
+    
