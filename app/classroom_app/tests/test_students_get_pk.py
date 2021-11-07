@@ -5,15 +5,10 @@ from django.urls import reverse
 from django.contrib.auth.models import User
 
 
-class TestStudentsPost(APITestCase):
+class TestStudentsGetPK(APITestCase):
     def setUp(self):
         self.client = APIClient()
         self.url = reverse('students')
-
-    def test_401_authorization_not_provided(self):
-        response = self.client.get(path=f"{self.url}1/")
-
-        self.assertEqual(response.status_code, 401)
 
     def test_404_no_student(self):
         self.user = User.objects.create(username="test")
@@ -65,5 +60,3 @@ class TestStudentsPost(APITestCase):
         response = self.client.get(path=f"{self.url}1/")
 
         self.assertEqual(response.status_code, 404)
-
-    

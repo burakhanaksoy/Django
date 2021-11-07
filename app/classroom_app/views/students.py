@@ -9,7 +9,7 @@ import logging
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework import authentication, permissions
 
-from api.permissions import AdminOrTeacherOnly
+from api.permissions import AdminOrTeacherOnly, AdminOnly, AdminOrRelatedTeacherOnly
 from django.db.utils import IntegrityError
 
 
@@ -63,6 +63,8 @@ class StudentList(APIView):
 
 
 class StudentDetails(APIView):
+    authentication_classes = [authentication.TokenAuthentication]
+    permission_classes = [AdminOrRelatedTeacherOnly]
 
     def get(self, request, pk, format=None):
         data = {}
@@ -94,9 +96,9 @@ class StudentDetails(APIView):
             return return_400_with_error_log(serializer.errors)
 
     def delete(self, request, pk, format=None):
-        is_super_user = self.request.user.is_superuser
-        if not is_super_user:
-            raise ValidationError('Only Admin account can do this operation.')
+        # is_super_user = self.request.user.is_superuser
+        # if not is_super_user:
+            # raise ValidationError('Only Admin account can do this operation.')
         try:
             student = Student.objects.get(pk=pk)
         except Student.DoesNotExist:

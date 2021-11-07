@@ -1,5 +1,7 @@
 from rest_framework import permissions
-from classroom_app.models import StudentDetail
+from classroom_app.models import StudentDetail, Student
+from classroom_app.errors import raise_not_found_with_status
+from api.helpers import extract_group_names
 
 SAFE_METHODS = ['GET', 'HEAD', 'OPTIONS']
 
@@ -42,9 +44,38 @@ class AdminOrRelatedTeacherOnly(permissions.BasePermission):
         is_related_teacher = False
         if request.method not in ["GET", "POST"]:
             pk = view.kwargs.get('pk')
-            student_detail = StudentDetail.objects.get(pk=pk)
-            is_related_teacher = student_detail.student.teacher.first_name.lower(
-            ) == request.user.username.lower()
+            try:
+                teacher_email_list = []
+                # group_name_list = map(
+                #     extract_group_names, list(request.user.groups.all()))
+
+                if any(group.name == "Teachers" for group in list(request.user.groups.all())):
+
+                    if student_detail := StudentDetail.objects.get(pk=pk):
+                        teachers = student_detail.student.teacher.all()
+
+                    for teacher in list(teachers):
+                        teacher_email_list.append(teacher.email)
+
+                    if request.user.email in teacher_email_list:
+                        is_related_teacher = True
+                else:
+                    is_related_teacher = False
+
+                ####
+                # user_group_list = list(request.user.groups.all())
+                # if any(user_group in user_group_list for user_group in  )
+                """
+                Burada sey yapcam,
+                    1- request.user'in eklendigi gruplarin ismini bir listede topla
+                    2- Bu isim listesi icinde "Teachers"'i bulmaya calis
+                    3- Bulursan bil ki o user ogretmendir...
+                """
+                ###
+
+            except StudentDetail.DoesNotExist:
+                self.message = 'Student does not exist.'
+                raise_not_found_with_status(self.message)
 
         is_safe_method = request.method in SAFE_METHODS
 
