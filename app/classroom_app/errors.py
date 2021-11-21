@@ -1,6 +1,6 @@
 from rest_framework.response import Response
 from rest_framework import status
-from api.exceptions import NotFoundError
+from app.api.exceptions import NotFoundError
 # import the logging library
 import logging
 

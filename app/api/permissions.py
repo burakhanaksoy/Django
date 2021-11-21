@@ -1,7 +1,6 @@
 from rest_framework import permissions
 from classroom_app.models import StudentDetail, Student
 from classroom_app.errors import raise_not_found_with_status
-from api.helpers import extract_group_names
 
 SAFE_METHODS = ['GET', 'HEAD', 'OPTIONS']
 
@@ -18,7 +17,7 @@ class AdminOrTeacherOnly(permissions.BasePermission):
         # edit and/or list this view.
         is_staff = bool(request.user and request.user.is_staff)
         is_safe_method = request.method in SAFE_METHODS
-        is_teacher_group = str(request.user.groups.all().first()) == 'teacher'
+        is_teacher_group = str(request.user.groups.all().first()) == 'Teachers'
 
         return is_staff or is_teacher_group or is_safe_method
 
