@@ -3506,5 +3506,7 @@ Here, when we check the Django admin panel, we see that the teacher is deleted s
 
 For other endpoints that do not require authentication, we can directly make an API call via Swagger.
 
+Lastly, as an important note, we reach to Swagger UI at `http://127.0.0.1:8081/api/swagger/`. Here, port and domain could differ.
+
 ---
 
