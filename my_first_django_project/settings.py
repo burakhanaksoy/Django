@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'drf_yasg',
     'classroom_app.apps.ClassroomAppConfig',
     'debug_toolbar',
     'rest_framework.authtoken',
@@ -145,15 +146,25 @@ REST_FRAMEWORK = {
     #     'rest_framework.throttling.AnonRateThrottle',
     #     'rest_framework.throttling.UserRateThrottle'
     # ],
-    # 'DEFAULT_THROTTLE_RATES': {
-    #     'anon': '1/day',
-    #     'user': '2/day',
-    #     'get_student_usr_throttle': '5/day',
-    #     'get_student_anon_throttle': '2/day'
-    # }
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '1/day',
+        'user': '2/day',
+        'get_student_usr_throttle': '100/day',
+        'get_student_anon_throttle': '50/day'
+    }
     # 'DEFAULT_AUTHENTICATION_CLASSES': [
     #     'rest_framework.authentication.BasicAuthentication'
     # ]
+}
+
+SWAGGER_SETTINGS = {
+    'SECURITY_DEFINITIONS': {
+        'api_key': {
+            'type': 'apiKey',
+            'in': 'header',
+            'name': 'Authorization'
+        }
+    },
 }
 
 # Internationalization
