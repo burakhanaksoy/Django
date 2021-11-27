@@ -8,7 +8,7 @@ from classroom_app.errors import return_400_with_error_log, return_404_with_erro
 import logging
 from api.permissions import AdminOrTeacherOnly
 from rest_framework import authentication
-
+from drf_yasg.utils import swagger_auto_schema
 
 class TeacherList(APIView):
     """
@@ -18,6 +18,7 @@ class TeacherList(APIView):
     authentication_classes = (authentication.TokenAuthentication,)
     permission_classes = (AdminOrTeacherOnly,)
 
+    @swagger_auto_schema(responses={200: TeacherWithStudentFieldSerializer(many=True)})
     def get(self, request, format=None):
         teachers = Teacher.objects.all()
         data = TeacherWithStudentFieldSerializer(teachers, many=True).data
@@ -28,10 +29,8 @@ class TeacherList(APIView):
         else:
             return Response(None, status=status.HTTP_204_NO_CONTENT)
 
+    @swagger_auto_schema(responses={201: "CREATED"}, request_body=TeacherSimpleSerializer())
     def post(self, request, format=None):
-        # is_super_user = self.request.user.is_superuser
-        # if not is_super_user:
-        #     raise ValidationError('Only Admin account can do this operation.')
         serializer = TeacherSimpleSerializer(data=request.data)
 
         if serializer.is_valid():

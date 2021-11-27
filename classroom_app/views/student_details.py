@@ -16,26 +16,6 @@ from api.permissions import AdminOrRelatedTeacherOnly, AdminOnly
 
 
 class StudentDetailView(viewsets.ModelViewSet):
-    """
-    View for displaying student detail information.
-    [
-        {
-            "student": 1,
-            "info": {
-                "first_name": "Burakhan",
-                "last_name": "Aksoy"
-            },
-            "age": 26,
-            "course": "CS101",
-            "teacher": "Ahmet Cevdet",
-            "grade": 0,
-            "avg_grade": 0.0,
-            "city": "Istanbul",
-            "email": "burakhan.aksoy@test.com",
-            "phone": "218382181221"
-        }
-    ]
-    """
     authentication_classes = [authentication.TokenAuthentication]
     permission_classes = [AdminOrRelatedTeacherOnly]
     queryset = StudentDetail.objects.all()
@@ -44,7 +24,8 @@ class StudentDetailView(viewsets.ModelViewSet):
 # Use these if u use viewsets.ViewSet
     def list(self, request):
         """Overrides mixins.ListModelMixin list method """
-        serializer = StudentDetailSerializer(StudentDetail.objects.all(), many=True)
+        serializer = StudentDetailSerializer(
+            StudentDetail.objects.all(), many=True)
         if not serializer.data:
             return Response(status=status.HTTP_204_NO_CONTENT)
 

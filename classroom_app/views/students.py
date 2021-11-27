@@ -8,6 +8,7 @@ from classroom_app.errors import return_400_with_error_log, return_404_with_erro
 import logging
 from rest_framework import authentication
 from api.permissions import AdminOrTeacherOnly
+from drf_yasg.utils import swagger_auto_schema
 
 from api.throttling import StudentListUserThrottle, StudentListAnonThrottle
 
@@ -27,7 +28,9 @@ class StudentList(APIView):
     permission_classes = [AdminOrTeacherOnly]
     throttle_classes = [StudentListUserThrottle, StudentListAnonThrottle]
 
+    @swagger_auto_schema(responses={200: StudentListSerializer(many=True)})
     def get(self, _, format=None):
+        """ Get all students """
         students = Student.objects.all()
         serializer = StudentListSerializer(students, many=True)
 
@@ -36,10 +39,8 @@ class StudentList(APIView):
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+    @swagger_auto_schema(responses={201: "CREATED"}, request_body=StudentPostSerializer())
     def post(self, request, format=None):
-        # is_super_user = self.request.user.is_superuser
-        # if not is_super_user:
-        #     raise ValidationError('Only Admin account can do this operation.')
         serializer = StudentPostSerializer(data=request.data)
 
         if serializer.is_valid():
