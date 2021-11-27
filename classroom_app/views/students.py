@@ -1,15 +1,15 @@
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.views import APIView
-from classroom_app.models import Student, StudentDetail
+from classroom_app.models import Student
 from rest_framework.exceptions import ValidationError
-from api.serializers import StudentDetailSerializer, StudentListSerializer, StudentSerializerUpdate, StudentPostSerializer
-from classroom_app.errors import return_400_with_error_log, return_404_with_error_log, return_400_admin_error
+from api.serializers import StudentListSerializer, StudentSerializerUpdate, StudentPostSerializer
+from classroom_app.errors import return_400_with_error_log, return_404_with_error_log
 import logging
-from rest_framework.permissions import IsAdminUser, IsAuthenticated
-from rest_framework import authentication, permissions
-
+from rest_framework import authentication
 from api.permissions import AdminOrTeacherOnly
+
+from api.throttling import StudentListUserThrottle, StudentListAnonThrottle
 
 
 class StudentList(APIView):
@@ -25,6 +25,7 @@ class StudentList(APIView):
     """
     authentication_classes = [authentication.TokenAuthentication]
     permission_classes = [AdminOrTeacherOnly]
+    throttle_classes = [StudentListUserThrottle, StudentListAnonThrottle]
 
     def get(self, _, format=None):
         students = Student.objects.all()
@@ -51,9 +52,10 @@ class StudentList(APIView):
 
 
 class StudentDetails(APIView):
+    authentication_classes = [authentication.TokenAuthentication]
+    permission_classes = [AdminOrTeacherOnly]
 
     def get(self, request, pk, format=None):
-        data = {}
         try:
             student = Student.objects.get(pk=pk)
         except Student.DoesNotExist:
