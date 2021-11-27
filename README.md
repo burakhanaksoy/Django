@@ -3478,3 +3478,33 @@ Then, we need to run `python manage.py makemigrations` and later `python manage.
 
 <h2>Authentication of Swagger</h2>
 
+As we know, some of our endpoints require authorization and permissions.
+
+In order to handle authentication, we need to add the following snippet to our settings.py
+
+```py
+SWAGGER_SETTINGS = {
+    'SECURITY_DEFINITIONS': {
+        'api_key': {
+            'type': 'apiKey',
+            'in': 'header',
+            'name': 'Authorization'
+        }
+    },
+}
+```
+
+This will ask us to insert user token. Let's show it with an example:
+
+
+
+https://user-images.githubusercontent.com/31994778/143682720-6acc38ee-137d-414c-b3ce-1a435a2be9bc.mov
+
+Here, when we check the Django admin panel, we see that the teacher is deleted successfully.
+
+<img width="800" alt="Screen Shot 2021-11-27 at 4 10 14 PM" src="https://user-images.githubusercontent.com/31994778/143682738-00086453-502e-4f8c-bff1-a44cc882f33a.png">
+
+For other endpoints that do not require authentication, we can directly make an API call via Swagger.
+
+---
+
