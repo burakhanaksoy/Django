@@ -38,6 +38,7 @@
 [Authentication](#authentication)
 [Unit Tests](#unit-tests)
 [Running Our Tests Through VSCode](#vs-code-integration)
+[Throttling](#throttling)
 
 ---
 
@@ -3250,7 +3251,180 @@ Which makes it available on the bottom left corner as:
 
 ---
 
+<div id="throttling">
+ 
+ <h2>Throttling</h2>
+ 
+<b><i> "Throttling is similar to permissions, in that it determines if a request should be authorized. Throttles indicate a temporary state, and are used to control the rate of requests that clients can make to an API."</i></b> [ref](https://www.django-rest-framework.org/api-guide/throttling/)
+ 
+ <b><i>"As with permissions and authentication, throttling in REST framework is always defined as a list of classes.
+
+Before running the main body of the view each throttle in the list is checked. If any throttle check fails an exceptions.Throttled exception will be raised, and the main body of the view will not run."</i></b> [ref](https://www.django-rest-framework.org/api-guide/throttling/#how-throttling-is-determined)
+ 
+ For starters, we add the following fields to settings.py, resulting in:
+ 
+ ```py
+ REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+        'api.permissions.AdminOrTeacherOnly'
+    ],
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication'
+    ],
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle'
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '1/day',
+        'user': '2/day'
+    }
+}
+ ```
+ 
+ This is applied globally, meaning that each API endpoint will heed these settings. Let's try!
+ 
+ <img width="600" alt="Screen Shot 2021-11-21 at 5 27 03 PM" src="https://user-images.githubusercontent.com/31994778/142765896-e2ac3c96-1968-4b2b-bb8d-c39d1bd73b5c.png">
+
+ Here, I made two requests to `api/students/` endpoint and the second one is throttled.
+ 
+ The same will be applied to an authenticated user on the 3rd request.
+ 
+ <b>Caveat:</b> When we apply throttling settings globally, this causes the following:
+ 
+ - Each and every view is affected by the global setting. When you run out of x requests per day, minute, hour, you cannot send another to a different view.
+ 
+ For example, here I cannot send any requests to `api/teachers/` endpoint since ran out of my requests on `api/students/` endpoint.
+ 
+ <img width="600" alt="Screen Shot 2021-11-21 at 5 48 22 PM" src="https://user-images.githubusercontent.com/31994778/142766721-bebf878c-4bcd-46d4-8573-83c4777b0abc.png">
+
+ ---
+ 
+ <h3>Local Throttling</h3>
+ 
+ Local throttling is only applied to a specific view in your application.
+ 
+ For local throttling, remove `DEFAULT_THROTTLE_CLASSES` key from settings.py
+ 
+ <img width="395" alt="Screen Shot 2021-11-21 at 5 50 49 PM" src="https://user-images.githubusercontent.com/31994778/142766888-6b4c3ed0-9bbc-49de-8050-c29637ffdba1.png">
+
+Having removed it, import `UserRateThrottle` and `AnonRateThrottle` in your view file such as:
+ 
+ ```py
+from rest_framework.throttling import UserRateThrottle, AnonRateThrottle
+
+
+class StudentList(APIView):
+    authentication_classes = [authentication.TokenAuthentication]
+    permission_classes = [AdminOrTeacherOnly]
+    throttle_classes = [UserRateThrottle, AnonRateThrottle]
+
+    def get(self, _, format=None):
+         ...
+ ```
+ 
+ In this way, we will be able to send requests to other views without being cut down by throttling error.
+ 
+ Throttled for `api/students/` api :
+ 
+ <img width="600" alt="Screen Shot 2021-11-21 at 5 54 13 PM" src="https://user-images.githubusercontent.com/31994778/142767031-601efa48-4735-48c4-b460-0d390541eb8b.png">
+
+ Sending another view (`api/teachers/`) successfully:
+ 
+ <img width="600" alt="Screen Shot 2021-11-21 at 5 55 15 PM" src="https://user-images.githubusercontent.com/31994778/142767070-da04ba9d-2e2f-4eb9-818b-69c4181d18f3.png">
 
  
-
+ </div>
  
+---
+
+<h2>Custom Throttling</h2>
+
+After seeing Global and Local throttling, it's now time for us to discover and move on with Custom Throttling.
+
+The difference between Global and Custom Throttling might be obvious, however, the same might not go for that of Local and Custom Throttling.
+
+<b>Differences Between Custom and Local Throttling</b>
+
+- Local throttling, at least for our example, is shared across implementing views, i.e., API count is shared between the views.
+  - For example, total of 10 requests/day, we can spend 9 for one view and 1 for another.
+- This phenomenon does not apply to custom throttling. Custom throttling is unique to a view, hence the name custom, so it's not shared with another view. Well, it shouldn't be shared.
+ 
+- Custom throttling is implemented by inheriting from a base throttle class and overriding it's `allow_request(self, request, view)` method.
+
+---
+
+<h3>Writing Our Custom Throttling Class</h3>
+
+<img width="377" alt="Screen Shot 2021-11-26 at 8 02 56 PM" src="https://user-images.githubusercontent.com/31994778/143613110-7d04ab08-8f8c-4d5f-87c1-cc0af276e31c.png">
+
+Now, we just created `throttling.py`, and inside, we have:
+
+```py
+from rest_framework import throttling
+
+
+class StudentListUserThrottle(throttling.UserRateThrottle):
+    scope = 'get_student_usr_throttle'
+
+    def allow_request(self, request, view):
+        return super().allow_request(request, view)
+
+
+class StudentListAnonThrottle(throttling.AnonRateThrottle):
+    scope = 'get_student_anon_throttle'
+
+    def allow_request(self, request, view):
+        return super().allow_request(request, view)
+```
+
+Here, defining `scope` variable is important. So that we can use them inside settings.py, as follows:
+
+```py
+REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+        'api.permissions.AdminOrTeacherOnly'
+    ],
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication'
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '1/day',
+        'user': '2/day',
+        'get_student_usr_throttle': '5/day',
+        'get_student_anon_throttle': '2/day'
+    }
+}
+```
+
+Last but not least, we should make use of the throttling classes we created inside views of choice.
+
+We are inside students.py file
+
+<img width="374" alt="Screen Shot 2021-11-26 at 8 08 50 PM" src="https://user-images.githubusercontent.com/31994778/143613589-00d30e6c-dbac-49c1-b4f0-45333c650012.png">
+
+```py
+...
+...
+from api.throttling import StudentListUserThrottle, StudentListAnonThrottle
+
+
+class StudentList(APIView):
+    """
+    Method: POST,
+    Query: Body
+       {
+        "first_name": "Burakhan",
+        "last_name": "Aksoy",
+        "age": 26,
+        "teacher": 1 (PK of the Teacher)
+        }
+    """
+    authentication_classes = [...]
+    permission_classes = [...]
+    throttle_classes = [StudentListUserThrottle, StudentListAnonThrottle]
+```
+
+And the rest is easy peasy 🏌️
