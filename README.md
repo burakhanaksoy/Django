@@ -39,6 +39,7 @@
 [Unit Tests](#unit-tests)
 [Running Our Tests Through VSCode](#vs-code-integration)
 [Throttling](#throttling)
+[Swagger](#swagger)
 
 ---
 
@@ -3428,3 +3429,52 @@ class StudentList(APIView):
 ```
 
 And the rest is easy peasy 🏌️
+
+---
+
+<div id="swagger">
+ 
+ <h2>Swagger</h2>
+ 
+ </div>
+ 
+<b> Swagger is a tool for documenting our APIs. It works live redoc. </b>
+
+Giving us a UI like this
+
+<img width="800" alt="Screen Shot 2021-11-27 at 3 29 54 PM" src="https://user-images.githubusercontent.com/31994778/143681367-2c18b146-abdf-4b23-810d-ad69f6f684f4.png">
+
+This UI let's us see what different endpoints are doing in app, what their purposes are and etc.
+
+<h2>Configuration of Swagger</h2>
+
+In order to use Swagger as a documentation for our endpoints, we firstly need to install 
+
+```
+drf-yasg==1.20.0
+click==8.0.3
+```
+
+[drf-yasg](https://pypi.org/project/drf-yasg/) is an open-source project, using coreapi package to provide Swagger UI.
+
+[click](https://pypi.org/project/click/) is a project related to command-line. I am really not very knowledgable on this. 
+
+After installing these two packages, we need to change `INSTALLED_APPS` in settings.py as:
+
+```py
+INSTALLED_APPS = [
+    ...
+    'django.contrib.staticfiles',
+    'drf_yasg',
+    ...
+]
+```
+
+`django.contrib.staticfiles` is needed for static files such as css and etc.
+
+Then, we need to run `python manage.py makemigrations` and later `python manage.py migrate`.
+
+---
+
+<h2>Authentication of Swagger</h2>
+
