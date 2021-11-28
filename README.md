@@ -40,6 +40,7 @@
 [Running Our Tests Through VSCode](#vs-code-integration)
 [Throttling](#throttling)
 [Swagger](#swagger)
+[Filtering](#filtering)
 
 ---
 
@@ -3507,6 +3508,76 @@ Here, when we check the Django admin panel, we see that the teacher is deleted s
 For other endpoints that do not require authentication, we can directly make an API call via Swagger.
 
 Lastly, as an important note, we reach to Swagger UI at `http://127.0.0.1:8081/api/swagger/`. Here, port and domain could differ.
+
+---
+
+<div id="filtering">
+ 
+ <h2>Filtering</h2>
+ 
+ </div>
+ 
+ <img width="782" alt="Screen Shot 2021-11-28 at 3 55 32 PM" src="https://user-images.githubusercontent.com/31994778/143768679-f22472ae-8456-4117-a2c4-29b4cd651f47.png">
+ 
+ <h3>Filtering Against Query Parameters</h3>
+ 
+ Let's say that I want to search and get students with their names, instead of primary keys. What comes in mind in the first place to make a query like
+ 
+ `/api/students/detail/?name=necmiye`
+ 
+ Here, we have an endpoint and it takes a query parameter as `?name=necmiye`.
+ 
+ Let's implement this:
+ 
+ <img width="376" alt="Screen Shot 2021-11-28 at 4 02 21 PM" src="https://user-images.githubusercontent.com/31994778/143768942-5e1c0bee-b2d6-4f4d-bac1-5ed6467044fe.png">
+
+ 
+ ```py
+ class StudentDetailViewWithQuery(generics.ListAPIView):
+    """
+    List a queryset.
+    """
+    serializer_class = StudentDetailSerializer
+    ...
+
+    def get_queryset(self):
+        name = self.request.GET.get('name')
+        queryset = StudentDetail.objects.all()
+
+        if name and (result := queryset.filter(student__first_name__iexact=name)):
+            return result
+
+    def list(self, request, *args, **kwargs):
+    
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True)
+        
+        if serializer.data:
+            return Response(serializer.data)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+```
+
+Here, we use `generics.ListAPIView`, which is all we need since this view will only handle listing, i.e., GET requests.
+
+Then, let's define a URL, under urls.py, for this view:
+
+```py
+urlpatterns = [
+    ...
+    path('students/detail/', StudentDetailViewWithQuery.as_view()),
+    ...
+]
+```
+
+And send our request
+
+<img width="822" alt="Screen Shot 2021-11-28 at 4 06 01 PM" src="https://user-images.githubusercontent.com/31994778/143769048-65d5fc98-2a3f-4d4c-9c23-88204d90ca8e.png">
+
+Here, we can also make validations on the query parameter.
+
+For names that return nothing, we can simply return 204
+
+<img width="834" alt="Screen Shot 2021-11-28 at 4 07 56 PM" src="https://user-images.githubusercontent.com/31994778/143769139-92d8e11e-fe68-4796-b129-0ec7dee72827.png">
 
 ---
 
