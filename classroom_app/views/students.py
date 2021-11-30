@@ -96,3 +96,4 @@ class StudentDetails(APIView):
         logging.info(f"INFO: Deleted successfully")
         logging.info(f'INFO: {student} deleted')
         return Response(None, status=status.HTTP_204_NO_CONTENT)
+

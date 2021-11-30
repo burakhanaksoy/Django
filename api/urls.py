@@ -4,6 +4,8 @@ from rest_framework.routers import DefaultRouter
 from classroom_app.views.teachers import TeacherList, TeacherDetails
 from classroom_app.views.students import StudentList, StudentDetails
 from classroom_app.views.student_details import StudentDetailView
+from classroom_app.views.student_details import StudentDetailViewWithQuery
+from classroom_app.views.student_details import StudentGrades
 from classroom_app.views.add_grade import AddGradeView
 
 from django.conf.urls import url
@@ -33,6 +35,8 @@ urlpatterns = [
     path('students/<int:pk>/', StudentDetails.as_view()),
 
     path('students/', include(router.urls)),
+    path('students/detail/', StudentDetailViewWithQuery.as_view()),
+    path('students/grades/', StudentGrades.as_view()),
     # path('students/details/', StudentDetailList.as_view()),
     # path('students/<int:pk>/details/', StudentDetailRetrieve.as_view()),
 

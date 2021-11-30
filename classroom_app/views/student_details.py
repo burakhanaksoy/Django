@@ -1,18 +1,14 @@
 from classroom_app.models import StudentDetail
+from api.serializers import StudentDetailSerializer
+from api.serializers import StudentGradeSerializer
+from api.permissions import AdminOrRelatedTeacherOnly
+
 from rest_framework.response import Response
 from rest_framework import status
-from api.serializers import StudentDetailSerializerWithTeacherFieldSerializer, StudentDetailSerializer
-from rest_framework.views import APIView
-import logging
-from classroom_app.errors import return_400_with_error_log, return_400_admin_error, return_404_with_error_log
-from rest_framework.exceptions import ValidationError
-from api.access_policies import StudentDetailAccessPolicy, StudentDetailDeleteAccessPolicy
-from rest_framework.permissions import IsAuthenticated
-from django.shortcuts import get_object_or_404
 from rest_framework import viewsets
-from rest_framework import authentication, permissions
-
-from api.permissions import AdminOrRelatedTeacherOnly, AdminOnly
+from rest_framework import authentication
+from rest_framework import generics
+from rest_framework import filters
 
 
 class StudentDetailView(viewsets.ModelViewSet):
@@ -21,7 +17,7 @@ class StudentDetailView(viewsets.ModelViewSet):
     queryset = StudentDetail.objects.all()
     serializer_class = StudentDetailSerializer
 
-# Use these if u use viewsets.ViewSet
+    # Use these if u use viewsets.ViewSet
     def list(self, request):
         """Overrides mixins.ListModelMixin list method """
         serializer = StudentDetailSerializer(
@@ -30,6 +26,43 @@ class StudentDetailView(viewsets.ModelViewSet):
             return Response(status=status.HTTP_204_NO_CONTENT)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class StudentDetailViewWithQuery(generics.ListAPIView):
+    """
+    List a queryset.
+    """
+    serializer_class = StudentDetailSerializer
+    authentication_classes = []
+    permission_classes = []
+
+    def get_queryset(self):
+        name = self.request.GET.get('name')
+        queryset = StudentDetail.objects.all()
+
+        if name and (result := queryset.filter(student__first_name__iexact=name)):
+            return result
+
+    def list(self, request, *args, **kwargs):
+
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True)
+
+        if serializer.data:
+            return Response(serializer.data)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    # def get_queryset(self):
+    #     """
+    #     Optionally restricts the returned purchases to a given user,
+    #     by filtering against a `username` query parameter in the URL.
+    #     """
+    #     queryset = StudentDetail.objects.all()
+    #     name = self.request.query_params.get('name')
+    #     if name is not None:
+    #         queryset = queryset.filter(
+    #             student_detail__student__first_name=name)
+    #     return queryset
 
     # def retrieve(self, request, pk=None):
     #     queryset = StudentDetail.objects.all()
@@ -123,3 +156,11 @@ class StudentDetailView(viewsets.ModelViewSet):
 #             return Response(None, status=status.HTTP_201_CREATED)
 #         else:
 #             return return_400_with_error_log(serializer.errors)
+
+class StudentGrades(generics.ListAPIView):
+    serializer_class = StudentGradeSerializer
+    queryset = StudentDetail.objects.all()
+    authentication_classes = []
+    permission_classes = []
+    filter_backends = [filters.OrderingFilter]
+    ordering_fields = ['avg_grade']
