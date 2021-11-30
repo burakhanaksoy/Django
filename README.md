@@ -40,6 +40,7 @@
 [Running Our Tests Through VSCode](#vs-code-integration)
 [Throttling](#throttling)
 [Swagger](#swagger)
+[Filtering](#filtering)
 
 ---
 
@@ -3510,3 +3511,156 @@ Lastly, as an important note, we reach to Swagger UI at `http://127.0.0.1:8081/a
 
 ---
 
+<div id="filtering">
+ 
+ <h2>Filtering</h2>
+ 
+ </div>
+ 
+ <img width="782" alt="Screen Shot 2021-11-28 at 3 55 32 PM" src="https://user-images.githubusercontent.com/31994778/143768679-f22472ae-8456-4117-a2c4-29b4cd651f47.png">
+ 
+ <h3>Filtering Against Query Parameters</h3>
+ 
+ Let's say that I want to search and get students with their names, instead of primary keys. What comes in mind in the first place to make a query like
+ 
+ `/api/students/detail/?name=necmiye`
+ 
+ Here, we have an endpoint and it takes a query parameter as `?name=necmiye`.
+ 
+ Let's implement this:
+ 
+ <img width="376" alt="Screen Shot 2021-11-28 at 4 02 21 PM" src="https://user-images.githubusercontent.com/31994778/143768942-5e1c0bee-b2d6-4f4d-bac1-5ed6467044fe.png">
+
+ 
+ ```py
+ class StudentDetailViewWithQuery(generics.ListAPIView):
+    """
+    List a queryset.
+    """
+    serializer_class = StudentDetailSerializer
+    ...
+
+    def get_queryset(self):
+        name = self.request.GET.get('name')
+        queryset = StudentDetail.objects.all()
+
+        if name and (result := queryset.filter(student__first_name__iexact=name)):
+            return result
+
+    def list(self, request, *args, **kwargs):
+    
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True)
+        
+        if serializer.data:
+            return Response(serializer.data)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+```
+
+Here, we use `generics.ListAPIView`, which is all we need since this view will only handle listing, i.e., GET requests.
+
+Then, let's define a URL, under urls.py, for this view:
+
+```py
+urlpatterns = [
+    ...
+    path('students/detail/', StudentDetailViewWithQuery.as_view()),
+    ...
+]
+```
+
+And send our request
+
+<img width="822" alt="Screen Shot 2021-11-28 at 4 06 01 PM" src="https://user-images.githubusercontent.com/31994778/143769048-65d5fc98-2a3f-4d4c-9c23-88204d90ca8e.png">
+
+Here, we can also make validations on the query parameter.
+
+For names that return nothing, we can simply return 204
+
+<img width="834" alt="Screen Shot 2021-11-28 at 4 07 56 PM" src="https://user-images.githubusercontent.com/31994778/143769139-92d8e11e-fe68-4796-b129-0ec7dee72827.png">
+
+---
+
+<h3>Ordering</h3>
+
+We can follow [ref](https://www.django-rest-framework.org/api-guide/filtering/#orderingfilter) for this one.
+
+Here, let's have a new endpoint `/api/students/grades/?ordering=avg_grade`, which orders the students by ascending / descending order, with respect to `avg_grade` field.
+
+In order to achieve this, firstly, we need to install `django-filtering` by `pip install django-filtering`.
+
+Then, add `'django_filters'` to `INSTALLED_APPS` in settings.py
+
+<img width="362" alt="Screen Shot 2021-11-28 at 6 14 10 PM" src="https://user-images.githubusercontent.com/31994778/143773981-965b177c-bc2b-4859-afe6-f89ba4ec9702.png">
+
+Then, create our endpoint under urls.py:
+
+```py
+from classroom_app.views.student_details import StudentGrades
+...
+
+urlpatterns = [
+    ...
+    path('students/grades/', StudentGrades.as_view()),
+    ...
+  ]
+```
+
+Lastly, generate our view under `student_details.py` as:
+
+```py
+class StudentGrades(generics.ListAPIView):
+    serializer_class = StudentDetailSerializer
+    queryset = StudentDetail.objects.all()
+    authentication_classes = []
+    permission_classes = []
+    filter_backends = [filters.OrderingFilter]
+    ordering_fields = ['avg_grade']     # This means we will order by 'avg_grade' field
+```
+
+<b>Here, we should note that for `Filtering`, `Searching` and `Ordering` operations, we will need `generics.ListAPIView` for the %99 of the time, since these operations are all about reading resources, rather than persisting.</b>
+
+Then, let's send a GET request to `/api/students/grades/?ordering=-avg_grade`, here `-avg_grade` means descending order.
+
+```py
+[
+    {
+        "student": 16,
+        "name": {
+            "first_name": "Rifki",
+            "last_name": "Sensoy"
+        },
+        "age": 26,
+        "course": "CS101",
+        "teacher": "Burakhan Aksoy",
+        "grade": 60,
+        "avg_grade": 75.0,
+        "city": "Istanbul",
+        "email": null,
+        "phone": "020312491231"
+    },
+    {
+        "student": 17,
+        "name": {
+            "first_name": "Necmiye",
+            "last_name": "Asil"
+        },
+        "age": 27,
+        "course": "PSY101",
+        "teacher": "Ahmet Arikan",
+        "grade": 0,
+        "avg_grade": 0.0,
+        "city": "Ankara",
+        "email": null,
+        "phone": "020312491221"
+    }
+]
+```
+
+Here, we get students ordered by their average grades in descending order. 
+
+To make things look better, we can define a different serializer class for this.
+
+<img width="364" alt="Screen Shot 2021-11-28 at 6 24 14 PM" src="https://user-images.githubusercontent.com/31994778/143774364-082d949b-c912-4e36-aa59-d5e77fbf1627.png">
+
+This looks much better 😉
