@@ -40,6 +40,7 @@
 [Running Our Tests Through VSCode](#vs-code-integration)
 [Throttling](#throttling)
 [Swagger](#swagger)
+[Pagination](#pagination)
 
 ---
 
@@ -3509,4 +3510,12 @@ For other endpoints that do not require authentication, we can directly make an 
 Lastly, as an important note, we reach to Swagger UI at `http://127.0.0.1:8081/api/swagger/`. Here, port and domain could differ.
 
 ---
+
+<div id="pagination">
+ 
+ <h2>Pagination</h2>
+ 
+ </div>
+ 
+ <img width="794" alt="Screen Shot 2021-11-30 at 6 16 50 PM" src="https://user-images.githubusercontent.com/31994778/144074443-2ca2b586-7f55-47bf-afec-bbbbd294e790.png">
 
