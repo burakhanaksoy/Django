@@ -29,7 +29,7 @@ class StudentList(APIView):
     throttle_classes = [StudentListUserThrottle, StudentListAnonThrottle]
 
     @swagger_auto_schema(responses={200: StudentListSerializer(many=True)})
-    def get(self, _, format=None):
+    def get(self, _):
         """ Get all students """
         students = Student.objects.all()
         serializer = StudentListSerializer(students, many=True)
@@ -40,14 +40,14 @@ class StudentList(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @swagger_auto_schema(responses={201: "CREATED"}, request_body=StudentPostSerializer())
-    def post(self, request, format=None):
+    def post(self, request):
         serializer = StudentPostSerializer(data=request.data)
 
         if serializer.is_valid():
             serializer.save()
             logging.info(f"INFO: Returned 201")
             logging.info(f'INFO: {request.data} created')
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response(status=status.HTTP_201_CREATED)
         else:
             return return_400_with_error_log(serializer.errors)
 
@@ -69,20 +69,20 @@ class StudentDetails(APIView):
 
         return Response(serializer.data, status=200)
 
-    def put(self, request, pk, format=None):
-        is_super_user = self.request.user.is_superuser
-        if not is_super_user:
-            raise ValidationError('Only Admin account can do this operation.')
-        student = Student.objects.get(pk=pk)
-        serializer = StudentSerializerUpdate(student, data=request.data)
+    # def put(self, request, pk, format=None):
+    #     is_super_user = self.request.user.is_superuser
+    #     if not is_super_user:
+    #         raise ValidationError('Only Admin account can do this operation.')
+    #     student = Student.objects.get(pk=pk)
+    #     serializer = StudentSerializerUpdate(student, data=request.data)
 
-        if serializer.is_valid():
-            serializer.save()
-            logging.info(f"INFO: Patched successfully")
-            logging.info(f'INFO: {request.data} updated')
-            return Response(None, status=status.HTTP_200_OK)
-        else:
-            return return_400_with_error_log(serializer.errors)
+    #     if serializer.is_valid():
+    #         serializer.save()
+    #         logging.info(f"INFO: Patched successfully")
+    #         logging.info(f'INFO: {request.data} updated')
+    #         return Response(None, status=status.HTTP_200_OK)
+    #     else:
+    #         return return_400_with_error_log(serializer.errors)
 
     def delete(self, request, pk, format=None):
         is_super_user = self.request.user.is_superuser

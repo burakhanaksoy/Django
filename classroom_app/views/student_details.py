@@ -1,18 +1,11 @@
 from classroom_app.models import StudentDetail
 from rest_framework.response import Response
 from rest_framework import status
-from api.serializers import StudentDetailSerializerWithTeacherFieldSerializer, StudentDetailSerializer
-from rest_framework.views import APIView
-import logging
-from classroom_app.errors import return_400_with_error_log, return_400_admin_error, return_404_with_error_log
-from rest_framework.exceptions import ValidationError
-from api.access_policies import StudentDetailAccessPolicy, StudentDetailDeleteAccessPolicy
-from rest_framework.permissions import IsAuthenticated
-from django.shortcuts import get_object_or_404
+from api.serializers import StudentDetailSerializer
 from rest_framework import viewsets
-from rest_framework import authentication, permissions
+from rest_framework import authentication
 
-from api.permissions import AdminOrRelatedTeacherOnly, AdminOnly
+from api.permissions import AdminOrRelatedTeacherOnly
 
 
 class StudentDetailView(viewsets.ModelViewSet):

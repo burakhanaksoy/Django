@@ -17,7 +17,7 @@ class TeacherSimpleSerializer(serializers.ModelSerializer):
         model = Teacher
         fields = '__all__'
         read_only_fields = ['id']
-        optional_fields = ['email', ]
+        optional_fields = ['email', 'name', 'surname', 'course']
 
     def validate(self, attrs):
         temp_dict = {k: v for k, v in attrs.items() if (
@@ -30,10 +30,21 @@ class TeacherSimpleSerializer(serializers.ModelSerializer):
         return attrs
 
 
-class TeacherWithOnlyCoursesGivenFieldSerializer(TeacherSimpleSerializer):
+class TeacherUpdateSerializer(serializers.ModelSerializer):
+
+    """Teacher update serializer."""
+
     class Meta:
         model = Teacher
-        fields = '__all__'
+        exclude = ['id']
+
+
+class AddStudentSerializer(serializers.ModelSerializer):
+    """Used for adding student to a specific teacher."""
+
+    class Meta:
+        model = Student
+        exclude = ['id']
 
 
 class StudentSimpleSerializer(serializers.ModelSerializer):
@@ -56,15 +67,23 @@ class StudentListSerializer(StudentSimpleSerializer):
     """
         Customized serializer. Use this for only displaying purpose.
     """
-    teacher = serializers.SerializerMethodField()
+    teachers = serializers.SerializerMethodField()
 
     class Meta:
         model = Student
-        read_only_fields = ['student_id']
-        fields = '__all__'
+        exclude = ['teacher']
 
-    def get_teacher(self, object):
-        return {"name": f'{object.teacher.first_name} {object.teacher.last_name}', "course": object.teacher.course}
+    def get_teachers(self, object):
+        teacher_list = []
+        if teachers := object.teacher.all():
+            for teacher in teachers:
+                teacher_list.append(
+                    {
+                        "name": teacher.name + ' ' + teacher.surname,
+                        "course": teacher.course
+                    }
+                )
+        return teacher_list if teacher_list else None
 
 
 class StudentPostSerializer(StudentSimpleSerializer):
@@ -74,7 +93,7 @@ class StudentPostSerializer(StudentSimpleSerializer):
 
     class Meta:
         model = Student
-        read_only_fields = ['student_id']
+        read_only_fields = ['id']
         fields = '__all__'
 
 
@@ -83,7 +102,6 @@ class StudentTeacherDiscardedSerializer(StudentSimpleSerializer):
     class Meta:
         model = Student
         read_only_fields = ['student_id']
-        # fields = '__all__'
         exclude = ["teacher"]
 
 
@@ -103,8 +121,8 @@ class StudentDetailSerializer(serializers.ModelSerializer):
     """
     name = serializers.SerializerMethodField()
     age = serializers.SerializerMethodField()
-    course = serializers.SerializerMethodField()
-    teacher = serializers.SerializerMethodField()
+    courses = serializers.SerializerMethodField()
+    # teacher = serializers.SerializerMethodField()
     grade = serializers.SerializerMethodField()
     avg_grade = serializers.SerializerMethodField()
 
@@ -116,13 +134,19 @@ class StudentDetailSerializer(serializers.ModelSerializer):
         return object.student.age
 
     def get_name(self, object):
-        return {'first_name': object.student.first_name, 'last_name': object.student.last_name}
+        return {'first_name': object.student.name, 'last_name': object.student.surname}
 
-    def get_course(self, object):
-        return object.student.teacher.course
-
-    def get_teacher(self, object):
-        return object.student.teacher.first_name + ' ' + object.student.teacher.last_name
+    def get_courses(self, object):
+        course_list = []
+        if teachers := object.student.teacher.all():
+            for teacher in teachers:
+                course_list.append(
+                    {
+                        "name": teacher.course,
+                        "lecturer": teacher.name + ' ' + teacher.surname
+                    }
+                )
+        return course_list if course_list else None
 
     def get_grade(self, object):
         return object.grade
@@ -160,13 +184,20 @@ class StudentDetailSerializerWithTeacherFieldSerializer(StudentDetailSerializer)
 
 
 class TeacherWithStudentFieldSerializer(serializers.ModelSerializer):
-    # teacher_student = StudentListSerializer(many=True, read_only=True)
-    # students = serializers.SerializerMethodField()
-    student = StudentTeacherDiscardedSerializer()
+    students = serializers.SerializerMethodField()
 
     class Meta:
         model = Teacher
         fields = '__all__'
 
-    # def get_students(self, object):
-    #     return object
+    def get_students(self, object):
+        student_list = []
+        if students := object.student.all():
+            for student in students:
+                student_list.append(
+                    {
+                        "name": student.name + ' ' + student.surname,
+                        "age": student.age
+                    }
+                )
+        return student_list if student_list else None
