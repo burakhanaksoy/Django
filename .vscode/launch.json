@@ -5,6 +5,13 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "Python: Current File",
+      "type": "python",
+      "request": "launch",
+      "program": "${file}",
+      "console": "integratedTerminal"
+    },
+    {
       "name": "Python: Django",
       "type": "python",
       "request": "launch",
@@ -26,6 +33,18 @@
       "request": "launch",
       "program": "${workspaceFolder}/app/manage.py",
       "args": ["test", "classroom_app.tests"],
+      "django": true
+    },
+    {
+      "name": "test-demo-app",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/app/manage.py",
+      "args": [
+        "test",
+        "demo_app.tests",
+        "--settings=my_first_django_project.test_settings"
+      ],
       "django": true
     }
   ]

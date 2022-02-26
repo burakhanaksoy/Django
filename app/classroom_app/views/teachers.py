@@ -3,7 +3,7 @@ from rest_framework import status
 from rest_framework.views import APIView
 from classroom_app.models import Teacher
 from rest_framework.exceptions import ValidationError
-from app.api.serializers import TeacherSimpleSerializer, TeacherWithStudentFieldSerializer
+from api.serializers import TeacherSimpleSerializer, TeacherWithStudentFieldSerializer
 from classroom_app.errors import return_400_with_error_log, return_404_with_error_log, return_400_admin_error
 import logging
 from api.permissions import AdminOrTeacherOnly

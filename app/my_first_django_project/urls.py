@@ -9,5 +9,6 @@ urlpatterns = [
     path('api/', include('api.urls')),
     path('__debug__/', include(debug_toolbar.urls)),
     path('api-auth/', include('rest_framework.urls')),
-    path('account/', include('user_app.api.urls'))
+    path('account/', include('user_app.api.urls')),
+    path('api/demo/', include('demo_app.urls'))
 ]
