@@ -345,5 +345,11 @@ The Migration class contains two main lists:
   
   <img width="450" alt="Screen Shot 2022-03-05 at 8 36 27 PM" src="https://user-images.githubusercontent.com/31994778/156894073-5513b593-0ef0-4984-bc77-bfc5007ddfc3.png">
 
+  <b>run_before</b>:
   
+  <img width="450" alt="Screen Shot 2022-03-05 at 8 38 35 PM" src="https://user-images.githubusercontent.com/31994778/156894162-7e7f5652-6539-4aaf-b05a-69b523685b8d.png">
+
+  Dependencies can also be combined so you can have multiple dependencies. This functionality provides a lot of flexibility, as you can accommodate foreign keys that depend upon models from different apps.
+
+The option to explicitly define dependencies between migrations also means that the numbering of the migrations (usually 0001, 0002, 0003, …) doesn’t strictly represent the order in which migrations are applied. You can add any dependency you want and thus control the order without having to re-number all the migrations.
   
