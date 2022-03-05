@@ -13,7 +13,6 @@
 <b>Table Of Contents</b> |
 ------------ | 
 [Introduction migrations](#intro-to-migrations)
-[Unapplying migrations](#unapplying-migrations)
 [Creating our model](#creating-our-model)
 [Inserting our first data](#inserting-data)
 
@@ -72,18 +71,67 @@ demo_orm_app_person  django_migrations
 
 We can get more info about the table we want through `.schema --indent <table name>`.
 
-<img width="659" alt="Screen Shot 2022-03-05 at 11 59 25 AM" src="https://user-images.githubusercontent.com/31994778/156876494-9b70a0ea-3af2-4784-8b8c-8b6d4c92afe7.png">
+<img width="450" alt="Screen Shot 2022-03-05 at 11 59 25 AM" src="https://user-images.githubusercontent.com/31994778/156876494-9b70a0ea-3af2-4784-8b8c-8b6d4c92afe7.png">
 
 `--indent` is used to format output nicely.
 
 In order to display migrations of other apps, we can do `python3 manage.py showmigrations`
 
-<img width="655" alt="Screen Shot 2022-03-05 at 12 40 46 PM" src="https://user-images.githubusercontent.com/31994778/156877844-6c7e0469-953e-4850-9f5f-0dc602415b56.png">
+<img width="450" alt="Screen Shot 2022-03-05 at 12 40 46 PM" src="https://user-images.githubusercontent.com/31994778/156877844-6c7e0469-953e-4850-9f5f-0dc602415b56.png">
 
 <div id="unapplying-migrations">
   <h3>Unapplying migrations</h3>
-  </div>
+  
+  We might want to revert a migration in these cases: [ref](https://realpython.com/django-migrations-a-primer/#the-problems-that-migrations-solve)
+  
+  - Want to test a migration a colleague wrote
+  - Realize that a change you made was a bad idea
+  - Work on multiple features with different database changes in parallel
+  - Want to restore a backup that was created when the database still had an older schema
+  
+  >To unapply a migration, you have to call migrate with the name of the app and the name of the migration before the migration you want to unapply.
+  
+  Imagine we have such a migration `0001_initial.py`
+  
+  <img width="450" alt="Screen Shot 2022-03-05 at 1 34 19 PM" src="https://user-images.githubusercontent.com/31994778/156879653-5d51a944-d6c3-4f87-9cdd-dc90b2c314b2.png">
 
+  We add a new field `some_field`, provide one-off default and migrate.
+  Now we have another migration file `0002_person_some_field.py`.
+  
+  <img width="450" alt="Screen Shot 2022-03-05 at 1 40 49 PM" src="https://user-images.githubusercontent.com/31994778/156881284-e0c8f881-f754-4f23-8443-2850b2f5b60a.png">
+
+  Then, we want to revert the last migration and go back to `0001_initial`.
+  
+  `python3 manage.py migrate demo_orm_app 0001`
+  
+  ```py
+  $ python3 manage.py migrate demo_orm_app 0001
+  Operations to perform:
+    Target specific migration: 0001_initial, from demo_orm_app
+  Running migrations:
+    Rendering model states... DONE
+    Unapplying demo_orm_app.0002_person_some_field... OK
+  ```
+  
+  After reverting the migration, we will see that `some_field` column is removed from db tables.
+  
+  <img width="450" alt="Screen Shot 2022-03-05 at 2 38 44 PM" src="https://user-images.githubusercontent.com/31994778/156881412-3b817c4e-98d6-4575-9926-cff496be97b9.png">
+
+  
+  <b>It is wort noting that when we make migrations again, this wil re-apply reverted migrations, because we are not removing `.py` files.</b>
+  
+  </div>
+  
+<h3>Naming migrations</h3>
+
+Normally, Django names migrations automatically, reflecting change happened in the model.
+Here are our migration files for `demo_orm_app` app.
+
+<img width="450" alt="Screen Shot 2022-03-05 at 2 54 34 PM" src="https://user-images.githubusercontent.com/31994778/156881901-76ceeed3-624a-4b24-836e-1d41eea51e02.png">
+
+If we want, we can name our migrations with `python manage.py makemigrations <app name> --name <given name>`.
+
+<img width="450" alt="Screen Shot 2022-03-05 at 2 58 52 PM" src="https://user-images.githubusercontent.com/31994778/156882530-49071431-b2b4-4809-9ecc-76ef51fba7bf.png">
 
 
 <h3>makemigrations vs migrate</h3>
@@ -95,7 +143,7 @@ These two commands can be easily mixed up. To clarify, we can say that:
 
 These can be shown as follows:
 
-<img width="684" alt="Screen Shot 2022-03-05 at 11 43 45 AM" src="https://user-images.githubusercontent.com/31994778/156875808-f92878cf-40a8-4585-bd7d-1a0ecc3673f3.png">
+<img width="450" alt="Screen Shot 2022-03-05 at 11 43 45 AM" src="https://user-images.githubusercontent.com/31994778/156875808-f92878cf-40a8-4585-bd7d-1a0ecc3673f3.png">
 
 ---
 
@@ -171,19 +219,19 @@ For example, we added `unique_together` to `name` and `age` fields and makemigra
   
   Also, we need to have an API (view file), helping us persist data in database.
   
-  <img width="575" alt="Screen Shot 2022-03-05 at 11 10 46 AM" src="https://user-images.githubusercontent.com/31994778/156874856-6dbebd4a-9113-4c82-9de3-8f90201d6407.png">
+  <img width="450" alt="Screen Shot 2022-03-05 at 11 10 46 AM" src="https://user-images.githubusercontent.com/31994778/156874856-6dbebd4a-9113-4c82-9de3-8f90201d6407.png">
 
   Sending data through our endpoint, `demo_orm/user/create/`, 
   
   We have data in our database as follows:
   
-  <img width="501" alt="Screen Shot 2022-03-05 at 11 17 32 AM" src="https://user-images.githubusercontent.com/31994778/156875002-c9a1a03b-13ef-416f-a3ce-953a3df888f4.png">
+  <img width="450" alt="Screen Shot 2022-03-05 at 11 17 32 AM" src="https://user-images.githubusercontent.com/31994778/156875002-c9a1a03b-13ef-416f-a3ce-953a3df888f4.png">
 
 <b>It's important that we have a serializer, which let's us return 400 immediately if sent data is incompatible with data we expect</b>.
 
 For example, if we send `age` less than zero,
 
-<img width="756" alt="Screen Shot 2022-03-05 at 11 26 42 AM" src="https://user-images.githubusercontent.com/31994778/156875267-9079414a-0234-4881-b54f-c42e0b4e6c15.png">
+<img width="450" alt="Screen Shot 2022-03-05 at 11 26 42 AM" src="https://user-images.githubusercontent.com/31994778/156875267-9079414a-0234-4881-b54f-c42e0b4e6c15.png">
 
 
 ---
