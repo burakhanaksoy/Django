@@ -230,9 +230,58 @@ For example, we added `unique_together` to `name` and `age` fields and makemigra
 <b>It's important that we have a serializer, which let's us return 400 immediately if sent data is incompatible with data we expect</b>.
 
 For example, if we send `age` less than zero,
-
+  
 <img width="450" alt="Screen Shot 2022-03-05 at 11 26 42 AM" src="https://user-images.githubusercontent.com/31994778/156875267-9079414a-0234-4881-b54f-c42e0b4e6c15.png">
-
 
 ---
 
+<h1>Digging Deeper Into Django Migrations</h1>
+
+<p align="center">
+<img width="600" src="https://user-images.githubusercontent.com/31994778/156883375-56a0099f-1a5e-4aa5-8029-a42fce2e5893.png">
+  
+  [ref](https://realpython.com/digging-deeper-into-migrations/)
+</p>
+
+<b>Table Of Contents</b> |
+------------ | 
+[How Django Knows Which Migrations to Apply](#how-does-django-know-which-migration-to-apply)
+[The Migration File](#the-migration-file)
+
+By the end of this article, you’ll know:
+
+- How Django keeps track of migrations
+- How migrations know which database operations to perform
+- How dependencies between migrations are defined
+
+<div id="how-does-django-know-which-migration-to-apply">
+<h2>How Django Knows Which Migrations to Apply</h2>
+  </div>
+  
+  The first time we run `python manage.py migrate <app_name>` command, django creates `django_migrations` table in the database and writes each migration it ran as a record.
+  
+<div>
+
+<img width="383" alt="Screen Shot 2022-03-05 at 4 09 05 PM" src="https://user-images.githubusercontent.com/31994778/156884527-e4d9f593-6410-44aa-ab1f-1f702edfa6a8.png">
+  
+<img width="450" alt="Screen Shot 2022-03-05 at 4 09 35 PM" src="https://user-images.githubusercontent.com/31994778/156884539-bddbb28c-5cff-4fd5-99aa-991a260379d1.png">
+  
+  </div>
+  
+<b>  If there's a migration file except for these, Django will run and apply that, however, migration files that are already in `django_migrations` table as a record won't be run with subsequent migrations.</b>
+  
+  >The next time migrations are run, Django will skip the migrations listed in the database table. This means that, even if you manually change the file of a migration that has already been applied, Django will ignore these changes, as long as there’s already an entry for it in the database.
+
+[ref](https://realpython.com/digging-deeper-into-migrations/)
+
+---
+
+<div id="the-migration-file">
+<h2>The Migration File</h2>
+</div>
+
+>What happens when you run python manage.py makemigrations <appname>? Django looks for changes made to the models in your app <appname>. If it finds any, like a model that has been added, then it creates a migration file in the migrations subdirectory. This migration file contains a list of operations to bring your database schema in sync with your model definition.
+  
+  <img width="450" alt="Screen Shot 2022-03-05 at 5 14 18 PM" src="https://user-images.githubusercontent.com/31994778/156887066-7420d7bb-9746-4994-881b-baf134e649ff.png">
+
+  
