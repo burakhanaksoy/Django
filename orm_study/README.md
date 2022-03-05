@@ -284,4 +284,62 @@ By the end of this article, you’ll know:
   
   <img width="450" alt="Screen Shot 2022-03-05 at 5 14 18 PM" src="https://user-images.githubusercontent.com/31994778/156887066-7420d7bb-9746-4994-881b-baf134e649ff.png">
 
+  Let's take a closer look at the migration file `0001_initial.py`.
+  
+```py
+import django.core.validators
+from django.db import migrations, models
+
+
+class Migration(migrations.Migration):
+
+    initial = True
+
+    dependencies = []
+
+    operations = [
+        migrations.CreateModel(
+            name='Person',
+            fields=[
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('name', models.CharField(max_length=50)),
+                ('age', models.PositiveIntegerField(validators=[django.core.validators.MinValueValidator(0), django.core.validators.MaxValueValidator(120)])),
+                ('gender', models.CharField(choices=[('M', 'Male'), ('F', 'Female')], max_length=1)),
+            ],
+            options={
+                'unique_together': {('name', 'age')},
+            },
+        ),
+    ]
+```
+ 
+The Migration class contains two main lists:
+
+  <b>1 - dependencies</b>
+  
+  <b>2 - operations</b>
+  
+  <h3>Migration Operations</h3>
+  
+  Let's talk about `operations` list first.
+  Operations list will contain the operations to be performed as part of the migration. 
+  Operations are subclasses of the class django.db.migrations.operations.base.Operation. 
+  Here are the common operations that are built into Django:
+  
+<img src="https://user-images.githubusercontent.com/31994778/156892711-11c6efb5-d7b6-4303-b381-7a337800257c.png" align="left" width="450"/>
+  <b>Operations are subclasses of the class django.db.migrations.operations.base.Operation. Here are the common operations that are built into Django:</b>
+
+<br clear="left"/>
+  
+  <h3>Migration Dependencies</h3>
+  
+  Dependencies list holds relationships of different migrations with each other. In `initial.py` migration file, dependencies = [ ] will be an empty list because this is the very first migration file and does not depend on any other.
+  
+  On the other hand, when we change anything in the model and re-migrate, we will have 0002 migration file.
+  
+  <img width="450" alt="Screen Shot 2022-03-05 at 8 30 25 PM" src="https://user-images.githubusercontent.com/31994778/156893904-1ccfa31f-9d78-4fc1-b9d7-6527ec8f8d10.png">
+
+  This makes sense because in order to make a change in the db table, you need to wait for the creation of the db table.
+  
+  
   
