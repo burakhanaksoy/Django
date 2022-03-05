@@ -341,5 +341,9 @@ The Migration class contains two main lists:
 
   This makes sense because in order to make a change in the db table, you need to wait for the creation of the db table.
   
+  A migration can also have a dependency on a migration of another app, such as:
+  
+  <img width="450" alt="Screen Shot 2022-03-05 at 8 36 27 PM" src="https://user-images.githubusercontent.com/31994778/156894073-5513b593-0ef0-4984-bc77-bfc5007ddfc3.png">
+
   
   
