@@ -14,6 +14,7 @@
 ------------ | 
 [Introduction migrations](#intro-to-migrations)
 [Creating our model](#creating-our-model)
+[Inserting our first data](#inserting-data)
 
 ---
 
@@ -97,9 +98,36 @@ For example, we added `unique_together` to `name` and `age` fields and makemigra
 
 <b>Here, important thing to notice is that every subsequent migration creates a new python file and they stack. (By stack, we mean that each subsequent file inherit from the previous migration's .py file)</b>
 
+---
+
+<div id="inserting-data">
+<h2>Inserting our first data</h2>
+  </div>
+  
+  Making migrations are just a way of creating tables and schema for our database. We can create real data through django's views and serializers.
+  
+  Here, we create a serializer in accordance with our Person model.
+  
+  <img width="442" alt="Screen Shot 2022-03-05 at 11 09 19 AM" src="https://user-images.githubusercontent.com/31994778/156874741-2c9d4139-2c21-4e68-8a5d-ad1e74c04f05.png">
+
+  This means that we will validate `name`, `age`, and `gender` fields.
+  
+  Also, we need to have an API (view file), helping us persist data in database.
+  
+  <img width="575" alt="Screen Shot 2022-03-05 at 11 10 46 AM" src="https://user-images.githubusercontent.com/31994778/156874856-6dbebd4a-9113-4c82-9de3-8f90201d6407.png">
+
+  Sending data through our endpoint, `demo_orm/user/create/`, 
+  
+  We have data in our database as follows:
+  
+  <img width="501" alt="Screen Shot 2022-03-05 at 11 17 32 AM" src="https://user-images.githubusercontent.com/31994778/156875002-c9a1a03b-13ef-416f-a3ce-953a3df888f4.png">
+
+<b>It's important that we have a serializer, which let's us return 400 immediately if sent data is incompatible with data we expect</b>.
+
+For example, if we send `age` less than zero,
+
+<img width="756" alt="Screen Shot 2022-03-05 at 11 26 42 AM" src="https://user-images.githubusercontent.com/31994778/156875267-9079414a-0234-4881-b54f-c42e0b4e6c15.png">
 
 
-
- 
 ---
 
