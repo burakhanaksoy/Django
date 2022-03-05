@@ -40,6 +40,34 @@ Here are a few ways Django migrations make your life easier.
 
 In traditional SQL, if you want to make changes on your db tables, you'd have to write more SQL codes. (This is what I've read on the internet, not that I know SQL :)) However, with migrations, you can easily change your db models with plain Python coding. We only have to run `python manage.py makemigrations` to make database changes effective.
 
+When created, the database tables can be check through `dbshell` as:
+
+```py
+$ python3 manage.py dbshell
+SQLite version 3.24.0 2018-06-04 14:10:15
+Enter ".help" for usage hints.
+sqlite> .tables
+auth_group                  demo_orm_app_person       
+auth_group_permissions      django_admin_log          
+auth_permission             django_content_type       
+auth_user                   django_migrations         
+auth_user_groups            django_session            
+auth_user_user_permissions
+```
+
+<b>Here, `demo_orm_app_person` is the table that we created with our `Person` model.</b>
+
+<h3>makemigrations vs migrate</h3>
+
+These two commands can be easily mixed up. To clarify, we can say that:
+
+- `makemigrations` will look for changes in models.py, if there's a change, it will apply, if not it will say `No changes detected`.
+- `migrate` will implement migration. 
+
+These can be shown as follows:
+
+<img width="684" alt="Screen Shot 2022-03-05 at 11 43 45 AM" src="https://user-images.githubusercontent.com/31994778/156875808-f92878cf-40a8-4585-bd7d-1a0ecc3673f3.png">
+
 ---
 
 <div id="creating-our-model">
