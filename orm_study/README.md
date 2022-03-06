@@ -353,3 +353,17 @@ The Migration class contains two main lists:
 
 The option to explicitly define dependencies between migrations also means that the numbering of the migrations (usually 0001, 0002, 0003, …) doesn’t strictly represent the order in which migrations are applied. You can add any dependency you want and thus control the order without having to re-number all the migrations.
   
+  <h3>Viewing the Migration</h3>
+  
+  If you want to view what SQL code your migration will implement beforehand, you can run
+  
+  `python manage.py sqlmigrate <app_name> <migration_file>`.
+  
+  For example:
+  
+  <img width="450" alt="Screen Shot 2022-03-06 at 1 22 20 PM" src="https://user-images.githubusercontent.com/31994778/156919280-32369c3e-d79c-4e1c-a4ca-4dce6db2715c.png">
+  
+  
+ When you pass the parameter --backwards, Django generates the SQL to unapply the migration:
+
+<img width="450" alt="Screen Shot 2022-03-06 at 1 34 28 PM" src="https://user-images.githubusercontent.com/31994778/156919422-7f591cbd-fe3b-42c1-a4fd-67f8c30000ff.png">
