@@ -367,3 +367,14 @@ The option to explicitly define dependencies between migrations also means that 
  When you pass the parameter --backwards, Django generates the SQL to unapply the migration:
 
 <img width="450" alt="Screen Shot 2022-03-06 at 1 34 28 PM" src="https://user-images.githubusercontent.com/31994778/156919422-7f591cbd-fe3b-42c1-a4fd-67f8c30000ff.png">
+
+  <h3>Conclusion</h3>
+  
+  This concludes your deep dive into Django migrations. Congratulations! You’ve covered quite a lot of advanced topics and now have a solid understanding what happens under the hood of migrations.
+
+You learned that:
+
+- Django keeps track of applied migrations in the Django migrations table.
+- Django migrations consist of plain Python files containing a Migration class.
+- Django knows which changes to perform from the operations list in the Migration classes.
+- Django compares your models to a project state it builds from the migrations.
