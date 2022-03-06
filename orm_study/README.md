@@ -583,7 +583,31 @@ You learned that:
   
   Like `gt`, we can also use `lt`, `gte`, and `lte`.
   
+  Also, it's worth mentioning that `count()` method can be used with any queryset.
+  
+  ```py
+  Person.objects.filter(age__gt=30).count()
+  2
+  ```
+  
   ---
+  
+  <h3>startswith & istartswith</h3>
+  
+  Case-sensitive / insensitive starts-with.
+  
+  ```py
+  Person.objects.filter(name__startswith="B").values('name','age')
+<QuerySet [{'name': 'Berna', 'age': 33}, {'name': 'Burakhan', 'age': 26}]>
+```
+  
+  ```py
+  Person.objects.filter(name__istartswith="i").values('name','age')
+<QuerySet [{'name': 'Inanc', 'age': 45}]>
+```
+  
+  ---
+  
   
   
     
