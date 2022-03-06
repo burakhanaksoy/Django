@@ -1,4 +1,4 @@
-<h1>Django ORM</h1>
+<h1>Django Migrations</h1>
 
 <p align="center">
 <img width="600px" src="https://user-images.githubusercontent.com/31994778/156621497-70d7aa7f-3183-4e15-b91c-26cd191ec83b.png">
@@ -378,3 +378,15 @@ You learned that:
 - Django migrations consist of plain Python files containing a Migration class.
 - Django knows which changes to perform from the operations list in the Migration classes.
 - Django compares your models to a project state it builds from the migrations.
+
+  ---
+  
+  <h1>Django ORM</h1>
+  
+  <p align="center">
+    <img width="600" src="https://user-images.githubusercontent.com/31994778/156921120-9d26c81a-dd13-4107-a00b-6d326bc841ac.png">
+  </p>
+  
+  [ref](https://medium.com/@gr8temi/object-relation-mappers-a-beginners-backpack-e5d82e67ffb)
+  
+  
