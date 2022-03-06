@@ -390,3 +390,208 @@ You learned that:
   [ref](https://medium.com/@gr8temi/object-relation-mappers-a-beginners-backpack-e5d82e67ffb)
   
   
+<b>Table Of Contents</b> |
+------------ | 
+[Relationships](#relationships)
+  
+  ---
+  
+  <div id="relationships">
+    <h2>Relationships</h2>
+  </div>
+  
+  <b>Relationships are provided by Django to simplify and smoothly implement connection between different tables.</b>
+  
+  There are three most used relationship types, these are:
+  
+  <b>1- Many-to-one Relationship</b>
+  
+  <b>2- Many-to-many Relationship</b>
+  
+  <b>3- One-to-one Relationship</b>
+  
+  Let's start with `Many-to-one`.
+  
+  <h3>Many-to-one Relationship</h3>
+  
+  <div align="center">
+  <img width="450" src="https://user-images.githubusercontent.com/31994778/156929451-a7387d00-d963-46d0-8c8b-bfed7f3099f1.png">
+  </div>
+  
+  [ref](https://www.jimwritescode.com/the-3-types-of-database-model-relationships-and-how-to-use-them-in-django/)
+  
+  customer - order relationship would be a great example for many-to-one since each order is owned by one customer, but one customer can have many orders.
+  
+  Our example would be person - company. A company can have many employees (person), but one person can only work for one company. (legally, I assume :))
+  
+  <img width="450" alt="Screen Shot 2022-03-06 at 6 24 55 PM" src="https://user-images.githubusercontent.com/31994778/156929829-9bdf298f-0a51-4c26-9d1b-655b526d08c7.png">
+
+  We can fill `Company` and `Person` data through terminal as:
+  
+  ```py
+  company_1 = {"name":"Huawei", "country":"CH", "net_worth_usd":"134.67"}
+  company_2 = {"name":"Exxon", "country":"US", "net_worth_usd":"92.91"}
+  Company.objects.bulk_create([Company(**company_1), Company(**company_2)])
+
+  Company.objects.all()
+  <QuerySet [<Company: Company: Huawei>, <Company: Company: Exxon>]>
+  ```
+  
+  We just used `Model.objects.bulk_create()` to save Companies.
+  
+  Then, we add user.
+  
+  ```py
+  p1 = {"name":"Burakhan", "age":26, "gender": "M"}
+  Person.objects.create(**p1)
+  person = Person.objects.get(name__iexact= "burakhan")
+  person.company = Company.objects.filter(name='Huawei')[0]
+  person.save()
+  ```
+  
+  After adding more persons, Now, our db tables are as follows:
+  
+  <img width="300" height="150" alt="Screen Shot 2022-03-06 at 7 43 30 PM" src="https://user-images.githubusercontent.com/31994778/156932844-f959e6d2-5ccc-45bb-ba6a-4d389421ed47.png" align="left">
+  
+<img width="300"  height="150" alt="Screen Shot 2022-03-06 at 7 48 22 PM" src="https://user-images.githubusercontent.com/31994778/156933034-27340bf3-d580-4a2e-88bd-fcaeaf81d26d.png">
+
+
+  <br clear="left"/>
+  
+  <h3>Making Queries & Backward Relationship</h3>
+  
+  Let's say that we want to find all the employees work for a company.
+  
+  1- Get the related company
+  
+  2- Get person objects having a foreign key to that company
+  
+  ```py
+  huawei = Company.objects.filter(name__iexact="Huawei").get()
+  list(huawei.person.values_list('name', flat=True))
+  ['Burakhan', 'Sevde', 'Faruk', 'Ahmet', 'Berna']
+  ```
+  
+  Here, `name__iexact` means `filter Company objects with name = "Huawei" by ignoring case sensitivity`.
+  
+  Then, we used `huawei.person.values_list()` to find `person` values of `huawei` company.
+  
+  We can also easily extract the number of employees with `.count()` method.
+  
+  ```py
+  huawei.person.values_list('name', flat=True).count()
+  5
+  ```
+  
+  If we want to repeat these steps for `Exxon`, we can just do:
+  
+  ```py
+  exxon = Company.objects.filter(name__iexact="Exxon").get()
+  list(exxon.person.values_list('name', flat=True))
+  ['Inanc', 'Utku']
+  exxon.person.values_list('name', flat=True).count()
+  2
+  ```
+  
+  Here, one thing wort mentioning is that even though `Company` model doesn't have `person` field, we can still reach to `person` values with
+  `exxon.person`.
+  
+  This is because `Company` model has a backward relation to `Person` model.
+  
+  <img width="450" alt="Screen Shot 2022-03-06 at 8 12 18 PM" src="https://user-images.githubusercontent.com/31994778/156934014-e5500ce2-6d18-4eb5-ba6b-1fd1c8ed7e31.png">
+
+  Passing `related_name` is optional, thanks to it's value "person", we can reach Person table from Company table.
+  
+  If we didn't passed `related_name`, we'd have to use `Exxon.person_set` to reach the Person table, as in:
+  
+  ```py
+  exxon = Company.objects.filter(name="Exxon").get()
+  exxon.person_set.all()
+  <QuerySet [<Person: Person: Inanc>, <Person: Person: Utku>]>
+  exxon.person_set.all().count()
+  2
+  ```
+  
+  <b>When passing `related_name`, it's suggested to use related model's name in lowercase.</b>
+  
+  ---
+
+  <h3>order_by()</h3>
+  
+  By default, results returned by a QuerySet are ordered by the ordering tuple given by the ordering option in the model’s Meta.
+  
+  You can override this on a per-QuerySet basis by using the order_by method. [ref](https://docs.djangoproject.com/en/4.0/ref/models/querysets/#order-by)
+  
+  What happens if we want to sort person table with respect to age field (descending / ascending)?
+  
+  ```py
+  from pprint import pprint
+  pprint(list(Person.objects.values('name','age').order_by("age")))
+  [{'age': 22, 'name': 'Utku'},
+   {'age': 24, 'name': 'Ahmet'},
+   {'age': 24, 'name': 'Faruk'},
+   {'age': 24, 'name': 'Sevde'},
+   {'age': 26, 'name': 'Burakhan'},
+   {'age': 33, 'name': 'Berna'},
+   {'age': 45, 'name': 'Inanc'}]
+  ```
+  
+  If we want descending order, we put `-` on the ordered field as:
+  
+  ```py
+  pprint(list(Person.objects.values('name','age').order_by("-age")))
+  [{'age': 45, 'name': 'Inanc'},
+   {'age': 33, 'name': 'Berna'},
+   {'age': 26, 'name': 'Burakhan'},
+   {'age': 24, 'name': 'Ahmet'},
+   {'age': 24, 'name': 'Faruk'},
+   {'age': 24, 'name': 'Sevde'},
+   {'age': 22, 'name': 'Utku'}]
+  ```
+  
+  We can also order persons related to a company by 
+  
+  ```py
+  huawei = Company.objects.filter(name="Huawei").get()
+  pprint(list(huawei.person_set.values('name','age').order_by('age')))
+  [{'age': 24, 'name': 'Sevde'},
+   {'age': 24, 'name': 'Faruk'},
+   {'age': 24, 'name': 'Ahmet'},
+   {'age': 26, 'name': 'Burakhan'},
+   {'age': 33, 'name': 'Berna'}]
+  ```
+  
+  ---
+  
+  <h3>gt</h3>
+  
+  We can select persons whose age greater than `x` with
+  
+  ```Person.objects.filter(age__gt = x)```
+  
+  ```py
+  Person.objects.filter(age__gt=30)
+  <QuerySet [<Person: Person: Berna>, <Person: Person: Inanc>]>
+  ```
+  
+  which can be more readable with
+  
+  ```py
+  Person.objects.filter(age__gt=30).values('name','age')
+<QuerySet [{'name': 'Berna', 'age': 33}, {'name': 'Inanc', 'age': 45}]>
+```
+  
+  Like `gt`, we can also use `lt`, `gte`, and `lte`.
+  
+  ---
+  
+  
+    
+    
+
+
+  
+  
+  
+  
+  
