@@ -608,9 +608,110 @@ You learned that:
   
   ---
   
+  <h3>range</h3>
+  
+  Range can be used to find objects with specified field located in the range between values of range (inclusive).
+  
+  Let's say that we want to find employees in `Huawei` between 20-26 years of age, inclusive.
+  
+  ```py
+huawei = Company.objects.get(name="Huawei")
+huawei.person_set.filter(age__range=(20,26))
+<QuerySet [<Person: Person: Burakhan>, <Person: Person: Sevde>, <Person: Person: Faruk>, <Person: Person: Ahmet>]>
+```
+  
+  <img width="450" alt="Screen Shot 2022-03-10 at 9 16 18 PM" src="https://user-images.githubusercontent.com/31994778/157728667-c28b00ef-cc22-415c-aa67-da0ae795090f.png">
+
+  ---
+  
+  <h3>Chaining Queries</h3>
+  
+  Since filter operation returns a `queryset`, and queryset has attribute `filter`, we can chain queries by using `filter()` method.
+  
+  ```py
+  some_queryset = huawei.person_set.filter(age__gt=20)
+hasattr(some_queryset,'filter')
+True
+```
+  
+  since hasattr(some_queryset,'filter') returns True, we can chain many queries together.
+  
+  ```py
+  huawei.person_set.filter(gender__iexact="M").filter(age__gt=20)
+<QuerySet [<Person: Person: Burakhan>, <Person: Person: Faruk>, <Person: Person: Ahmet>]>
+```
+  
+  In this sense, chaining in Django ORM works very similar to `aggregation pipeline` in `MongoDB`.
+  
+  For example:
+  
+  ```py
+  huawei.person_set.filter(age__lt=30).filter(age__gt=25)
+<QuerySet [<Person: Person: Burakhan>]>
+```
+  
+  <b>Chaining filters and filtering with multiple kwargs works as and `AND` condition for the most of the time, however, for `ManytoMany` relationships and `reverse foreign key search` Chaining filters works as `OR` and filtering with multiple kwargs works as `OR`.</b>
+  
+  <img width="343" alt="Screen Shot 2022-03-10 at 10 12 51 PM" src="https://user-images.githubusercontent.com/31994778/157737882-d1cd5d93-99c6-4273-8137-261b9aa93690.png">
+
+  Here, filtering with multiple kwargs acts as an `AND` condition:
+  
+  ```py
+  Company.objects.filter(person__gender="M" , person__age__gt=25)
+<QuerySet [<Company: Company: Huawei>, <Company: Company: Exxon>]>
+```
   
   
-    
+  However, chaining filters acts as an `OR` condition:
+  
+  ```py
+  Company.objects.filter(person__gender="M" ).filter(person__age__gt=25)
+<QuerySet [<Company: Company: Huawei>, <Company: Company: Huawei>, <Company: Company: Huawei>, <Company: Company: Huawei>, <Company: Company: Huawei>, <Company: Company: Huawei>, <Company: Company: Exxon>, <Company: Company: Exxon>]>
+  ```
+  
+  If we hadn't used a reverse foreign key here, then both multiple kwargs and chain filters would have acted as `AND` condition:
+  
+  ```py
+  Person.objects.filter(gender="M", age__gt=25)
+<QuerySet [<Person: Person: Burakhan>, <Person: Person: Inanc>]>
+Person.objects.filter(gender="M" ).filter(age__gt=25)
+<QuerySet [<Person: Person: Burakhan>, <Person: Person: Inanc>]>
+```
+  
+  [ref](https://stackoverflow.com/questions/5542874/difference-between-filter-with-multiple-arguments-and-chain-filter-in-django)
+  
+  ---
+  
+  <h3>isnull</h3>
+  
+  Takes either True or False, which correspond to SQL queries of IS NULL and IS NOT NULL, respectively. [ref](https://docs.djangoproject.com/en/4.0/ref/models/querysets/)
+  
+  For example, create a person with `company` not assigned, in other words, `NULL`.
+  
+  ```py
+  person = {"name":"Cevdet", "age":18, "gender":"M"}
+Person.objects.create(**person)
+Person: Cevdet
+```
+  
+  <img width="280" alt="Screen Shot 2022-03-10 at 10 29 27 PM" src="https://user-images.githubusercontent.com/31994778/157740044-1ee3f90b-89f1-4657-96dd-10a5809e2741.png">
+  
+  Then,
+  
+  ```py
+  Person.objects.filter(company__isnull=True)
+<QuerySet [<Person: Person: Cevdet>]>
+```
+  
+  ```py
+  Person.objects.filter(company__isnull=False)
+<QuerySet [<Person: Person: Burakhan>, <Person: Person: Sevde>, <Person: Person: Faruk>, <Person: Person: Ahmet>, <Person: Person: Berna>, <Person: Person: Inanc>, <Person: Person: Utku>]>
+  ```
+  
+  ---
+  
+  
+
     
 
 
