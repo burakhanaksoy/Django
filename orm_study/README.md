@@ -710,6 +710,28 @@ Person: Cevdet
   
   ---
   
+  <h3>regex</h3>
+  
+  Used for pattern matching. Recommended to use with `r`(raw) strings.
+  
+  ```py
+  Person.objects.filter(name__regex=r"(et)$")
+<QuerySet [<Person: Person: Ahmet>, <Person: Person: Cevdet>]>
+```
+  
+  `field__iregex` is used for case insensitive regex matching.
+  
+  ```py
+  Person.objects.filter(name__regex=r"A")
+<QuerySet [<Person: Person: Ahmet>]>
+Person.objects.filter(name__iregex=r"A")
+<QuerySet [<Person: Person: Burakhan>, <Person: Person: Faruk>, <Person: Person: Ahmet>, <Person: Person: Berna>, <Person: Person: Inanc>]>
+```
+  
+  
+  
+  ---
+  
   
 
     
