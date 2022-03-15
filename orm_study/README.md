@@ -621,6 +621,13 @@ huawei.person_set.filter(age__range=(20,26))
 ```
   
   <img width="450" alt="Screen Shot 2022-03-10 at 9 16 18 PM" src="https://user-images.githubusercontent.com/31994778/157728667-c28b00ef-cc22-415c-aa67-da0ae795090f.png">
+  
+  This can also be done by querying `Person` objects directly, as:
+  
+  ```py
+  Person.objects.filter(age__range=(20,26),company__name__iexact='huawei')
+<QuerySet [<Person: Person: Burakhan>, <Person: Person: Sevde>, <Person: Person: Faruk>, <Person: Person: Ahmet>]>
+```
 
   ---
   
