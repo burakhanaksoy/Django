@@ -657,7 +657,7 @@ True
 <QuerySet [<Person: Person: Burakhan>]>
 ```
   
-  <b>Chaining filters and filtering with multiple kwargs works as and `AND` condition for the most of the time, however, for `ManytoMany` relationships and `reverse foreign key search` Chaining filters works as `OR` and filtering with multiple kwargs works as `OR`.</b>
+  <b>Chaining filters and filtering with multiple kwargs works as and `AND` condition for the most of the time, however, for `ManytoMany` relationships and `reverse foreign key search` Chaining filters works as `OR` and filtering with multiple kwargs works as `AND`.</b>
   
   <img width="343" alt="Screen Shot 2022-03-10 at 10 12 51 PM" src="https://user-images.githubusercontent.com/31994778/157737882-d1cd5d93-99c6-4273-8137-261b9aa93690.png">
 
