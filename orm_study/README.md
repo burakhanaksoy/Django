@@ -735,9 +735,29 @@ Person.objects.filter(name__iregex=r"A")
 <QuerySet [<Person: Person: Burakhan>, <Person: Person: Faruk>, <Person: Person: Ahmet>, <Person: Person: Berna>, <Person: Person: Inanc>]>
 ```
   
+  <h3>distinct()</h3>
   
+  <img width="800" alt="Screen Shot 2022-03-15 at 7 10 17 PM" src="https://user-images.githubusercontent.com/31994778/158421851-012d8ee7-62f6-4558-9119-05c8315e2b27.png">
+
+  For example, when we make the following query:
+  
+  ```py
+  Company.objects.filter(person__gender = "M")
+<QuerySet [<Company: Company: Huawei>, <Company: Company: Huawei>, <Company: Company: Huawei>, <Company: Company: Exxon>, <Company: Company: Exxon>]>
+```
+  
+  Here, we only want companies that have `person` whose gender is male, since this is a backward foreign key relation, result has repeated objects, which is not very meaningful. Instead, we can use `distinct()` to find out the companies without repetition.
+  
+  ```py
+  Company.objects.filter(person__gender = "M").distinct()
+<QuerySet [<Company: Company: Huawei>, <Company: Company: Exxon>]>
+```
+  
+  Now, we know that both companies `Huawei` and `Exxon` have employees whose gender is male.
   
   ---
+  
+  <h3>Many-to-many Relationship</h3>
   
   
 
