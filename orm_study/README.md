@@ -759,6 +759,75 @@ Person.objects.filter(name__iregex=r"A")
   
   <h3>Many-to-many Relationship</h3>
   
+  Here, we will have an example of `Students` and `Societies` in a school. This is a great example of `Many to Many` relationship as one student can be associated with multiple societies and a society can hold multiple students.
+  
+  <img width="450" alt="Screen Shot 2022-03-15 at 10 29 00 PM" src="https://user-images.githubusercontent.com/31994778/158456587-3369dd3f-087c-400d-abd6-3b1ed865bd42.png">
+
+Let's create students.
+  
+  ```py
+  from demo_orm_app.models import Student, Society # From now on we won't be using repeating this import for other steps
+  student1 = {"name":"Burakhan", "seniority":"SNR", "gpa":3.80}
+student2 = {"name":"Berna", "seniority":"JNR", "gpa":3.11}
+student3 = {"name":"Utku", "seniority":"FRE", "gpa":2.81}
+student4 = {"name":"Dilan", "seniority":"SNR", "gpa":2.06}
+  
+  Student.objects.bulk_create([Student(**student1),Student(**student2),Student(**student3),Student(**student4)])
+[<Student: Student: Burakhan>, <Student: Student: Berna>, <Student: Student: Utku>, <Student: Student: Dilan>]
+```
+  
+  Now, let's create our societies.
+
+  ```py
+  Society.objects.create(name="Logos")
+  Society.objects.create(name="Pythonistas")
+  
+  student1 = Student.objects.first()
+  student2 = Student.objects.all()[1]
+  student3 = Student.objects.all()[2]
+  student4 = Student.objects.all()[3]
+  
+  logos.students.add(student1)
+  logos.students.add(student2)
+  logos.students.add(student4)
+  pythonistas.students.add(student1)
+  pythonistas.students.add(student3)
+  
+  logos.save()
+  pythonistas.save()
+  ```
+  
+  <b>It's important to emphasize that when adding student to a society, we cannot directly add student on society creation, instead we use `Societ.objects.add(student)`.</b>
+  
+  After all these operations, we have the following tables in our db:
+  
+  <img width="450" alt="Screen Shot 2022-03-15 at 10 52 51 PM" src="https://user-images.githubusercontent.com/31994778/158460472-7f005e5e-478a-4dfc-8baa-77aaffe196fa.png">
+  
+  <b>Django creates an intermediary table for Many to Many relationships, this intermediary table has foreignKeys to source and destination models.</b>
+  
+  In our example, this can be visualized as follows:
+  
+  `demo_orm_app_society_students` table:
+  
+  <img width="450" alt="Screen Shot 2022-03-15 at 10 57 34 PM" src="https://user-images.githubusercontent.com/31994778/158461194-bde630ee-59d9-4fd3-9076-68411adadb65.png">
+  
+  Here, we can see that Logos society has students `1`, `2`, and `4`.
+  
+  Pythonistas society has students `1` and `3`.
+  
+  Also, `Student` table has the following form:
+  
+  <img width="223" alt="Screen Shot 2022-03-15 at 11 34 24 PM" src="https://user-images.githubusercontent.com/31994778/158467677-c7a7c5a3-13db-48bc-8e82-57d7685c4928.png">
+
+  
+  And, `Society` table:
+  
+  <img width="210" alt="Screen Shot 2022-03-15 at 11 34 52 PM" src="https://user-images.githubusercontent.com/31994778/158467689-592c0efd-e81b-44e8-b51d-2f97aa45cca7.png">
+
+  Here, as you can see, there's no direct relation between `Student` table and `Society` table. (They don't have field to connect to one another) What connects these two models is the intermediary table created by Django.
+  
+  ---
+  
   
 
     
