@@ -917,8 +917,23 @@ For example:
   
   [ref](https://docs.djangoproject.com/en/4.0/ref/models/querysets/#methods-that-return-new-querysets)
   
+  Django provides a range of QuerySet refinement methods that modify either the types of results returned by the QuerySet or the way its SQL query is executed. [ref](https://docs.djangoproject.com/en/4.0/ref/models/querysets/#methods-that-return-new-querysets)
   
+  <h4>filter()</h4>
 
+Returns a new QuerySet containing objects that match the given lookup parameters.
+
+The lookup parameters (**kwargs) should be in the format described in Field lookups below. Multiple parameters are joined via AND in the underlying SQL statement.
+
+If you need to execute more complex queries (for example, queries with OR statements), you can use Q objects (*args).
+  
+  
+  <h4>exclude()</h4>
+  
+  Returns a new QuerySet containing objects that do not match the given lookup parameters.
+
+The lookup parameters (**kwargs) should be in the format described in Field lookups below. Multiple parameters are joined via AND in the underlying SQL statement, and the whole thing is enclosed in a NOT().
+  
   
   
   
