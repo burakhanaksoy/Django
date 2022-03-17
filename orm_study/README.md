@@ -828,10 +828,94 @@ student4 = {"name":"Dilan", "seniority":"SNR", "gpa":2.06}
   
   ---
   
+  <h3>Making Queries</h3>
   
+  <b>`Society` objects have direct access to `Student` objects as:</b>
+  
+  ```py
+  logos.students.all()
+<QuerySet [<Student: Student: Burakhan>, <Student: Student: Berna>, <Student: Student: Dilan>]>
+pythonistas.students.all()
+<QuerySet [<Student: Student: Burakhan>, <Student: Student: Utku>]>
+```
+  
+  <b>`Student` objects has a backward relation to `Society` objects as:</b>
+  
+  ```py
+  student1 = Student.objects.first()
+student1.society_set.all()
+<QuerySet [<Society: Society: Logos>, <Society: Society: Pythonistas>]>
+  
+student3 = Student.objects.all()[2]
+student3.society_set.all()
+<QuerySet [<Society: Society: Pythonistas>]>
+```
 
-    
+  Here, reaching at society from student, we use `society_set` due to backward relation. ( Same as for Many to one)
+  
+  We could have also used `related_name` property to refrain from using `society_set` as:
+  
+  <img width="450" alt="Screen Shot 2022-03-17 at 3 20 29 PM" src="https://user-images.githubusercontent.com/31994778/158807384-2e9a6c11-db67-44b5-9c8d-636519fd0fc4.png">
 
+    Then, we could have made queries as follows:
+  
+  ```py
+  student1 = Student.objects.first()
+student1.society.all()
+<QuerySet [<Society: Society: Logos>, <Society: Society: Pythonistas>]>
+  
+student2 = Student.objects.all()[1]
+student2.society.all()
+<QuerySet [<Society: Society: Logos>]>
+```
+
+Many-to-many relationships can be queried using lookups across relationships: [ref](https://docs.djangoproject.com/en/4.0/topics/db/examples/many_to_many/)
+  
+  ```py
+  Student.objects.filter(society__name="Logos")
+<QuerySet [<Student: Student: Burakhan>, <Student: Student: Berna>, <Student: Student: Dilan>]>
+  
+Student.objects.filter(society__name="Logos").values('id','name')
+<QuerySet [{'id': 1, 'name': 'Burakhan'}, {'id': 2, 'name': 'Berna'}, {'id': 4, 'name': 'Dilan'}]>
+  
+Student.objects.filter(society__name="Pythonistas").values('id','name')
+<QuerySet [{'id': 1, 'name': 'Burakhan'}, {'id': 3, 'name': 'Utku'}]>
+  
+Student.objects.filter(society__pk="Pythonistas").values('id','name')
+<QuerySet [{'id': 1, 'name': 'Burakhan'}, {'id': 3, 'name': 'Utku'}]>
+```
+  
+We previously said that in backward foreign key relation, we might have duplicate data. Many to Many is no exception.
+  
+  In order to prevent repetition, we can use `distinct()`.
+  
+For example:
+  
+  ```py
+  Society.objects.filter(students__name__startswith="B")
+<QuerySet [<Society: Society: Logos>, <Society: Society: Logos>, <Society: Society: Pythonistas>]>
+```
+  
+  Here, Society:Logos repeated twice.
+  
+  In order to prevent this, let's use `distinct()`,
+  
+  ```py
+  Society.objects.filter(students__name__startswith="B").distinct()
+<QuerySet [<Society: Society: Logos>, <Society: Society: Pythonistas>]>
+```
+  
+  Here, we have one `Logos`, and one `Pythonistas`.
+  
+  <img width="400" alt="Screen Shot 2022-03-17 at 5 25 47 PM" src="https://user-images.githubusercontent.com/31994778/158828220-64dd2498-2f63-4c4c-8f71-0425d98105d2.png">
+
+<b>The reason why `Logos` repeated twice in the first case is that it has two students (Burakhan, Berna) starting with 'B'. However, since we don't count students, we need `Logos` returned once.</b>
+  
+  ---
+  
+  <h3>Methods that return new QuerySets</h3>[ref](https://docs.djangoproject.com/en/4.0/ref/models/querysets/#methods-that-return-new-querysets)
+  
+  
 
   
   
