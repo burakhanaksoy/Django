@@ -934,8 +934,19 @@ If you need to execute more complex queries (for example, queries with OR statem
 
 The lookup parameters (**kwargs) should be in the format described in Field lookups below. Multiple parameters are joined via AND in the underlying SQL statement, and the whole thing is enclosed in a NOT().
   
+  ```py
+  Student.objects.exclude(name__startswith="B") # All students whose name don't start with 'B'
+<QuerySet [<Student: Student: Utku>, <Student: Student: Dilan>]>
+```
   
+    It can also be read as `Do not show objects whose name startswith 'B'`.
   
+  ```py
+  Student.objects.exclude(seniority="SNR") # All students that are not senior
+<QuerySet [<Student: Student: Berna>, <Student: Student: Utku>]>
+```
+  
+  It can also be read as `Do not show objects with seniority="SNR"`.
   
   
   
