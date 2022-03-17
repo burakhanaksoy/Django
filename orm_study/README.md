@@ -913,7 +913,9 @@ For example:
   
   ---
   
-  <h3>Methods that return new QuerySets</h3>[ref](https://docs.djangoproject.com/en/4.0/ref/models/querysets/#methods-that-return-new-querysets)
+  <h3>Methods that return new QuerySets</h3>
+  
+  [ref](https://docs.djangoproject.com/en/4.0/ref/models/querysets/#methods-that-return-new-querysets)
   
   
 
