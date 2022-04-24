@@ -948,5 +948,64 @@ The lookup parameters (**kwargs) should be in the format described in Field look
   
   It can also be read as `Do not show objects with seniority="SNR"`.
   
+  ---
+  
+  <h3>Prefetch Related & Select Related</h3>
+  
+  
+  
+  <b>select_related()</b>
+  
+>Returns a QuerySet that will “follow” foreign-key relationships, selecting additional related-object data when it executes its query. This is a performance booster which results in a single more complex query but means later use of foreign-key relationships won’t require database queries.
+  
+Not using select_related():
+  ```py
+  In [113]: from django.db import connection
+  In [114]: from django.db import reset_queries
+
+  In [115]: def change_company(company_obj):
+       ...:     reset_queries()
+       ...:     t1 = perf_counter()
+       ...:     persons = Person.objects.filter().select_related('company')
+       ...:     for p in persons:
+       ...:         company = p.company
+       ...:     print(f'query  count: {len(connection.queries)}')
+       ...:     t2 = perf_counter()
+       ...:     print(f"Using select related -> Elapsed time: {t2-t1} seconds")
+       ...: 
+
+  In [116]: change_company(Company.objects.get(name__iexact="apple"))
+  query  count: 1
+  Using select related -> Elapsed time: 2.699390436999238 seconds
+  ```
+  
+  Using select_related():
+  
+  ```py
+  In [117]: def change_company(company_obj):
+     ...:     reset_queries()
+     ...:     t1 = perf_counter()
+     ...:     persons = Person.objects.filter()
+     ...:     for p in persons:
+     ...:         company = p.company
+     ...:     print(f'query  count: {len(connection.queries)}')
+     ...:     t2 = perf_counter()
+     ...:     print(f"Not using select related -> Elapsed time: {t2-t1} seconds")
+     ...: 
+
+  In [118]: change_company(Company.objects.get(name__iexact="bmw"))
+  /Library/Frameworks/Python.framework/Versions/3.8/lib/python3.8/site-packages/django/db/backends/base/base.py:159: UserWarning: Limit for query logging exceeded, only the last 9000 queries will be returned.
+    warnings.warn(
+  query  count: 9000
+  Not using select related -> Elapsed time: 54.21876210299888 seconds
+  ```
+  
+  As it is seen here, both functions do the same thing, i.e., assigning person's company to company variable. Using `select_related`, we hit database only once, however, not using it result in more than 9000 hits to db.
+  
+  This is very nice for boosting performance.
+  
+  <b>prefetch_related()</b>
+  
+  
   
   
