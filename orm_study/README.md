@@ -958,7 +958,7 @@ The lookup parameters (**kwargs) should be in the format described in Field look
   
 >Returns a QuerySet that will “follow” foreign-key relationships, selecting additional related-object data when it executes its query. This is a performance booster which results in a single more complex query but means later use of foreign-key relationships won’t require database queries.
   
-Not using select_related():
+Using select_related():
   ```py
   In [113]: from django.db import connection
   In [114]: from django.db import reset_queries
@@ -979,7 +979,7 @@ Not using select_related():
   Using select related -> Elapsed time: 2.699390436999238 seconds
   ```
   
-  Using select_related():
+  Not using select_related():
   
   ```py
   In [117]: def change_company(company_obj):
