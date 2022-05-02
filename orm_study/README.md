@@ -1006,7 +1006,13 @@ Using select_related():
   
   <b>prefetch_related()</b>
   
-  <b>  To be continued ...</b>
+  We emphasized that `select_related` is used with forward foreign key relationships, i.e., Foreign Key and One-to-one. There, Django uses Join query to fetch related records from database. However, since JOIN might cause very large querysets for backward relationships, i.e., Many-to-many and Many-to-one.
+  
+  To prevent this, Django uses `prefetch_related`, <b>which handles JOIN operation Python side, not database side.</b>
+  
+  <b>prefetch_related makes two queries to database, whereas select_related makes a single query.</b>
+  
+  <b> to be continued ... </b>
   
   ---
   
