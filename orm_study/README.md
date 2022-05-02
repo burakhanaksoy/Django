@@ -1006,6 +1006,173 @@ Using select_related():
   
   <b>prefetch_related()</b>
   
+  <b>  To be continued ...</b>
+  
+  ---
+  
+  <h1>SQL Joins</h1>
+  
+  <p align="center">
+  <img width="681" alt="Screen Shot 2022-05-02 at 10 37 21 AM" src="https://user-images.githubusercontent.com/31994778/166200561-e8bf1847-c206-4bc0-be8f-230af94cefe9.png">
+  </p>
+  
+  [ref](https://dev.to/azibom/sql-joins-29j4)
+  
+  <h2>Inner Join</h2>: Gets the records common between two tables.
+  
+  <p align="center">
+  <img width="580" alt="Screen Shot 2022-05-02 at 11 05 15 AM" src="https://user-images.githubusercontent.com/31994778/166204716-7d1a4a83-59c4-4afa-898e-130810163c42.png">
+  </p>
+  
+  Let's say that we have a Django query like this:
+  
+  ```py
+    persons = Person.objects.select_related('company').annotate(company_name=F('company__name'))
+  ```
+  
+  The SQL query for this would be:
+  
+  ```py
+  In [68]: connection.queries
+  Out[68]: 
+  [{'sql': 'SELECT "demo_orm_app_person"."id", "demo_orm_app_person"."name", "demo_orm_app_person"."age", "demo_orm_app_person"."gender",
+  "demo_orm_app_person"."company_id", "demo_orm_app_person"."company_id" AS "company_name", "demo_orm_app_company"."name",
+  "demo_orm_app_company"."country", "demo_orm_app_company"."net_worth_usd" FROM "demo_orm_app_person" INNER JOIN "demo_orm_app_company" ON
+  ("demo_orm_app_person"."company_id" = "demo_orm_app_company"."name") LIMIT 21',
+    'time': '0.000'}]
+  ```
+  
+  Here, Django automatically uses `INNER JOIN` since in `models.py` file, company foreign key field's null=False. If null=True, Django would've used `LEFT OUTER JOIN`.
+  
+  
+  <h2>LEFT JOIN</h2>
+  
+  LEFT JOIN is performed when models.py has `null=True` in foreing key as:
+  
+  ```py
+  class Person(models.Model):
+    ...
+    ...
+    company = models.ForeignKey(
+        Company, on_delete=models.SET_NULL, null=True, blank=False)
+  ```
+  
+  LEFT (OUTER) JOIN fetches all records in the left table and matching (common) records from left and right tables. Which resembles:
+  
+  <p align="center">
+  <img width="574" alt="Screen Shot 2022-05-02 at 11 40 52 AM" src="https://user-images.githubusercontent.com/31994778/166210158-aaccd2e7-0a38-4412-b619-5c6127c29c38.png">
+  </p>
+
+  
+  Let's say that we have a Django query like this:
+  
+  ```py
+    persons = Person.objects.select_related('company').annotate(company_name=F('company__name'))
+  
+  ```
+  
+  The SQL query for this would be:
+  
+  ```py
+  [{'sql': 'SELECT "demo_orm_app_person"."id", "demo_orm_app_person"."name", "demo_orm_app_person"."age", "demo_orm_app_person"."gender",
+  "demo_orm_app_person"."company_id", "demo_orm_app_person"."company_id" AS "company_name", "demo_orm_app_company"."name",
+  "demo_orm_app_company"."country", "demo_orm_app_company"."net_worth_usd" FROM "demo_orm_app_person" LEFT OUTER JOIN "demo_orm_app_company"
+  ON ("demo_orm_app_person"."company_id" = "demo_orm_app_company"."name")',
+  'time': '0.000'}]
+  ```
+
+  <h2>Comparing LEFT JOIN & INNER JOIN Performance</h2>
+  
+I have a code like this to compare `INNER` and `LEFT OUTER Join`.
+  
+  ```py
+  In [69]: def inner_join():
+    ...:     reset_queries()
+    ...:     t1 = perf_counter()
+    ...:     persons = Person.objects.select_related('company').annotate(
+    ...:     company_name=F('company__name'))
+    ...:     for p in persons:
+    ...:         a = p
+    ...:     t2 = perf_counter()
+    ...:     print(f'took {t2-t1} seconds to perform Inner Join')
+    ...:     AVG_LIST.append(t2-t1)
+    ...: 
+
+In [70]: AVG_LIST  = []
+
+In [71]: def inner_join():
+    ...:     reset_queries()
+    ...:     t1 = perf_counter()
+    ...:     persons = Person.objects.select_related('company').annotate(
+    ...:     company_name=F('company__name'))
+    ...:     for p in persons:
+    ...:         a = p
+    ...:     t2 = perf_counter()
+    ...:     print(f'took {t2-t1} seconds to perform Inner Join')
+    ...:     AVG_LIST.append(t2-t1)
+    ...: 
+
+In [72]: for _ in range(15):
+    ...:     inner_join()
+    ...: 
+took 2.729332660000182 seconds to perform Inner Join
+took 2.767448657999921 seconds to perform Inner Join
+took 2.4748998989998654 seconds to perform Inner Join
+took 2.460684833000414 seconds to perform Inner Join
+took 2.4353539419998924 seconds to perform Inner Join
+took 2.52845765299935 seconds to perform Inner Join
+took 2.7451316730002873 seconds to perform Inner Join
+took 2.435984350000581 seconds to perform Inner Join
+took 2.7293671889992766 seconds to perform Inner Join
+took 2.4756257330000153 seconds to perform Inner Join
+took 2.4759732149996125 seconds to perform Inner Join
+took 2.433091930000046 seconds to perform Inner Join
+took 2.4126887929996883 seconds to perform Inner Join
+took 2.7930059669997718 seconds to perform Inner Join
+took 2.435664113999337 seconds to perform Inner Join
+
+In [73]: avg = sum(AVG_LIST) / len(AVG_LIST)
+
+In [74]: avg
+Out[74]: 2.5555140405998826
+  ```
+  
+  If I do the same with LEFT JOIN,
+  
+  ```py
+  In [104]: AVG_LIST  = []
+
+In [105]: for _ in range(15):
+     ...:     left_outer_join()
+     ...: 
+took 2.602157104000071 seconds to perform Left Outer Join
+took 2.732104504000745 seconds to perform Left Outer Join
+took 2.712001894000423 seconds to perform Left Outer Join
+took 2.8617051469991566 seconds to perform Left Outer Join
+took 2.6570855820009456 seconds to perform Left Outer Join
+took 2.7215289730011136 seconds to perform Left Outer Join
+took 3.0553318000002037 seconds to perform Left Outer Join
+took 2.622854870000083 seconds to perform Left Outer Join
+took 2.790051741001662 seconds to perform Left Outer Join
+took 2.5975412749994575 seconds to perform Left Outer Join
+took 2.817424057999233 seconds to perform Left Outer Join
+took 2.6104321340008028 seconds to perform Left Outer Join
+took 2.7705869089986663 seconds to perform Left Outer Join
+took 2.7611339400009456 seconds to perform Left Outer Join
+took 2.536067393000849 seconds to perform Left Outer Join
+
+In [106]: avg = sum(AVG_LIST) / len(AVG_LIST)
+
+In [107]: avg
+Out[107]: 2.723200488266957
+  ```
+  
+  For 15 retries, avg of `INNER JOIN` is 2.56 seconds, `LEFT JOIN` is 2.72 seconds.
+  
+  
+  
+  
+  
   
   
   
