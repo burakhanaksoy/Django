@@ -1086,18 +1086,6 @@ Using select_related():
 I have a code like this to compare `INNER` and `LEFT OUTER Join`.
   
   ```py
-  In [69]: def inner_join():
-    ...:     reset_queries()
-    ...:     t1 = perf_counter()
-    ...:     persons = Person.objects.select_related('company').annotate(
-    ...:     company_name=F('company__name'))
-    ...:     for p in persons:
-    ...:         a = p
-    ...:     t2 = perf_counter()
-    ...:     print(f'took {t2-t1} seconds to perform Inner Join')
-    ...:     AVG_LIST.append(t2-t1)
-    ...: 
-
 In [70]: AVG_LIST  = []
 
 In [71]: def inner_join():
