@@ -40,6 +40,7 @@
 [Running Our Tests Through VSCode](#vs-code-integration)
 [Throttling](#throttling)
 [Swagger](#swagger)
+[Django Admin Panel](#django-admin-panel)
 
 ---
 
@@ -3510,3 +3511,43 @@ Lastly, as an important note, we reach to Swagger UI at `http://127.0.0.1:8081/a
 
 ---
 
+<div id="django-admin-panel">
+ 
+ <h2>Django Admin Panel</h2>
+ 
+ <b>verbose_name and verbose_name_plural</b>:
+ 
+ <p align="center">
+ <img width=500 height=300 src="https://user-images.githubusercontent.com/31994778/172688592-e6fc025d-673d-4c4f-8c3d-85b70a54dcfa.png"/>
+ </p>
+ 
+ When we do like this, Teacher table will look as follows in the django admin panel:
+ 
+ <p align="center">
+<img width=500 height=300  src="https://user-images.githubusercontent.com/31994778/172688995-71812c49-af07-4e95-90a7-4b14f8b5ed64.png"/>
+ </p>
+
+ Also, the App display name can be changed in Django Admin panel, as
+ 
+ <p align="center">
+ <img width=500 height=300 src="https://user-images.githubusercontent.com/31994778/172691634-2ebde92c-51d0-41d4-99d5-85a2be68098b.png"/>
+ </p>
+ 
+ <p align="center">
+ <img width=500 height=300 src="https://user-images.githubusercontent.com/31994778/172691755-245507a3-3665-46ca-bfbf-2a86e41f29f6.png"/>
+ </p>
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ </div>
