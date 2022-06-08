@@ -40,5 +40,8 @@ class StudentDetail(models.Model):
     avg_grade = models.FloatField(default=0)
     grade_no = models.PositiveIntegerField(default=0)
 
+    class Meta:
+        verbose_name_plural = "Student Details"
+
     def __str__(self):
         return f'{self.student_id}'
