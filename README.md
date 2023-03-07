@@ -1986,7 +1986,70 @@ We are inside models.py
  <h2>Select & Prefetch Related</h2>
  </div>
  
- <h3> Select Related </h3
+  <h3> Select Related </h3>
+  
+ We use `select_related` on forward relationships such as Foreign Key and OneToOne fields.
+ 
+ We have a model such as follows:
+ 
+ ```py
+ class Installment(models.Model):
+    schedule = models.ForeignKey("api.InstallmentSchedule", related_name="installments", on_delete=models.PROTECT)
+    invoice = models.OneToOneField("api.Invoice", related_name="installment", on_delete=models.PROTECT, null=True)
+    ...
+    
+ ```
+ 
+ Here `Intallment` model has a Foreign Key relationship with schedule and OneToOne relationship with Invoice.
+ 
+ Defining our `traverse` function and `time_` decorator.
+ 
+ ```py
+ 
+    def time_(func):
+        @wraps(func)
+        def wrapped(*args, **kwargs):
+            t1 = time.time()
+            func(*args, **kwargs)
+            t2 = time.time()
+            print(f"Time elapsed : {round((t2-t1), 3)}")
+        return wrapped
+        
+    @time_
+    def traverse(installments):
+        for ins in installments[:20]:
+            _, _ = ins.invoice.date_created, ins.schedule.date_created
+
+ ```
+ 
+ Then, our query with select_related:
+ 
+ ```py
+ installments = (
+       Installment.objects.filter(invoice__isnull=False)
+      .select_related("invoice", "schedule")
+  )
+  
+  
+  traverse(installments)
+  Time elapsed : 0.066s
+
+ ```
+ 
+ Using without select_related
+ 
+ ```py
+ installments = (
+       Installment.objects.filter(invoice__isnull=False)
+  )
+    
+ traverse(installments)
+ Time elapsed : 1.61s
+ ```
+ 
+ Summary: <b>Use select_related if you traverse, and hit fields of the objects you fetch from database! </b>
+ 
+  <h3> Prefetch Related </h3>
  
  ---
  
