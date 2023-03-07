@@ -31,6 +31,7 @@
 [Model Serializer](#model-serializer)
 [Serializer Method Fields](#custom-fields)
 [Relationships](#relationships)
+[Select & Prefetch Related](#select-prefetch-related)
 [Writing Views for StudentsDetail](#students-detail-views)
 [User Model](#user-model)
 [Permissions](#permissions)
@@ -1978,6 +1979,14 @@ We are inside models.py
 <b>Here, it's very important to see that we can define as many serializer class as we want. As long as the ones we define for POST, PUT, PATCH methods are static, i.e., not changing, we can defined many serializer classes for displaying GET request results differently.</b>
  
  In this way, serializers of Django are very much like aggregation in MongoDB.
+ 
+ ---
+ 
+ <div id="select-prefetch-related">
+ <h2>Select & Prefetch Related</h2>
+ </div>
+ 
+ <h3> Select Related </h3
  
  ---
  
