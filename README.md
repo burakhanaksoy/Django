@@ -802,6 +802,63 @@ SELECT "my_demo_app_student"."id", "my_demo_app_student"."first_name", "my_demo_
 SELECT "my_demo_app_student"."id", "my_demo_app_student"."first_name", "my_demo_app_student"."last_name", "my_demo_app_student"."age", "my_demo_app_student"."teacher" FROM "my_demo_app_student" WHERE NOT ("my_demo_app_student"."age" = 26)
 ```
 
+<h3>Order of annotate() and values() clauses</h3>
+
+This is taken from [django docs](https://docs.djangoproject.com/en/4.1/topics/db/aggregation/#order-of-annotate-and-values-clauses)
+
+in my MR reviews, I saw `values()` clause preceding `annotate()` clause and inside annotation, other developers take the Max() of some model field.
+
+I thought this might be an error since Max() is an aggregation function. Later, I learned that `values()` preceding `annotate()` meant `GROUP BY` statement of SQL.
+
+ - `values()` succeeding `annotate()`:
+    
+```py
+    Installment.objects.annotate(Max('amount_principal')).values('schedule__id').count()
+    SELECT COUNT(*)
+      FROM (
+            SELECT "api_installment"."schedule_id" AS Col1
+              FROM "api_installment"
+             GROUP BY "api_installment"."id"
+           ) subquery
+
+    Execution time: 0.023188s [Database: default]
+    Out[2]: 5868
+```
+
+- `values()` preceding `annotate()`:
+
+```py
+Installment.objects.values('schedule__id').annotate(Max('amount_principal')).count()
+SELECT COUNT(*)
+  FROM (
+        SELECT "api_installment"."schedule_id" AS Col1,
+               MAX("api_installment"."amount_principal") AS "amount_principal__max"
+          FROM "api_installment"
+         GROUP BY "api_installment"."schedule_id"
+       ) subquery
+
+Execution time: 0.024425s [Database: default]
+Out[3]: 975
+```
+
+As it's seen from the second SQL query, we have `GROUP BY "api_installment"."schedule_id"`.
+
+We can print Installments nicely as follows:
+
+```py
+qs = Installment.objects.values('schedule__id').annotate(Max('amount_principal')).order_by('schedule__id')
+for inst in qs:
+    print(inst)
+
+Execution time: 0.032450s [Database: default]
+{'schedule__id': 1, 'amount_principal__max': Decimal('33.52')}
+{'schedule__id': 2, 'amount_principal__max': Decimal('205.10')}
+{'schedule__id': 3, 'amount_principal__max': Decimal('169.87')}
+{'schedule__id': 5, 'amount_principal__max': Decimal('207.79')}
+{'schedule__id': 6, 'amount_principal__max': Decimal('407.76')}
+...
+```
+
 ---
 
 <div id="drf">
