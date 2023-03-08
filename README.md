@@ -605,7 +605,6 @@ SQLAlchemy is also an ORM.
  <img width="412" alt="Screen Shot 2021-08-08 at 3 14 18 PM" src="https://user-images.githubusercontent.com/31994778/128631714-5ea931bf-afb8-4318-b4d3-be523e27398d.png">
  </p>
  
----
 
 <h3>A Simple Demo</h3>
 
@@ -720,8 +719,6 @@ To find out what the related SQL query for this operation is, we can run `print(
 SELECT "my_demo_app_student"."id", "my_demo_app_student"."first_name", "my_demo_app_student"."last_name", "my_demo_app_student"."age", "my_demo_app_student"."teacher" FROM "my_demo_app_student"
 ```
 
----
-
 <h3>OR Queries</h3>
 
  
@@ -741,7 +738,6 @@ SELECT "my_demo_app_student"."id", "my_demo_app_student"."first_name", "my_demo_
 
 As you can see, we filtered students whose teacher is "Ahmet" <b>OR</b> whose age is 21.
 
----
 
 <h3>AND Queries</h3>
 
