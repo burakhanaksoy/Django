@@ -723,7 +723,7 @@ SELECT "my_demo_app_student"."id", "my_demo_app_student"."first_name", "my_demo_
 ---
 
 <div id="or">
-<h2>OR Queries</h2>
+<h3>OR Queries</h3>
  </div>
  
  Let's find students whose teacher is A or B.
@@ -745,7 +745,7 @@ As you can see, we filtered students whose teacher is "Ahmet" <b>OR</b> whose ag
 ---
 
 <div id="and">
-<h2>AND Queries</h2>
+<h3>AND Queries</h3>
  </div>
 
 Returns queries where each condition is met.
