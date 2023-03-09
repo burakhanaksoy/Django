@@ -2252,21 +2252,23 @@ We are inside models.py
   If we want to reach Invoice table from Installment table, the query count will increase to three even if we prefetched Installment table.
   
   ```py
-  In [162]: schedules = InstallmentSchedule.objects.filter(installments__isnull=False).prefetch_related('installments__invoice')
+  In [25]: schedules = InstallmentSchedule.objects.alias(
+    ...:     installment_invoice_count=Count(F('installments__invoice')),
+    ...:     installment_count=Count(F('installments'))
+    ...: ).filter(
+    ...:     installment_invoice_count=F('installment_count')
+    ...: ).prefetch_related('installments__invoice')
 
-In [163]: for sch in schedules:
-     ...:     installments = sch.installments.all()
-     ...:     for inst in installments:
-     ...:         a = inst.invoice.date_created if hasattr(inst, 'invoice') and hasattr(inst.invoice, 'date_created') else None
-     ...: 
 
-In [164]: len(connection.queries)
-Out[164]: 3
+  In [27]: for sch in schedules:
+      ...:     installments = sch.installments.all()
+      ...:     for inst in installments:
+      ...:         a = inst.invoice.date_created
+      ...: 
+
+  In [28]: len(connection.queries)
+  Out[28]: 3
 ```
-
-SQL queries for this:
-
-to be filled...
 
 We should always be able to get 2 queries with prefetch_related. At least this is what I know from the articles I read so far. For that, in order to select Invoice table (OneToOne related with Installment table), we will use the `Prefetch()` object.
 
@@ -2289,7 +2291,7 @@ Out[174]: 2
 
 Queries being made for this:
 
-to be filled...
+
   
  
  ---
