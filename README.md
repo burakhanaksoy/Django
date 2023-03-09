@@ -2096,6 +2096,156 @@ We are inside models.py
  Summary: <b>Use select_related if you traverse, and hit fields of the objects you fetch from database! </b>
  
   <h3> Prefetch Related </h3>
+  
+  Prefetch related is used with reverse ManyToMany and reverse ForeignKey relations. This is to say that we deal with object sets rather than a single object.
+  
+  I'm using this code snippet to import necessary methods to count SQL queries made.
+  
+  ```py
+  from django.db import connection, reset_queries
+  def num_queries(reset=True):
+      print(len(connection.queries))
+      if reset:
+          reset_queries()
+  ```
+  
+  ```py
+  
+  schedules = InstallmentSchedule.objects.filter(installments__isnull=False)[:100]
+  
+  In [28]: for sch in schedules:
+    ...:     installments = sch.installments.all()
+    ...:     for inst in installments:
+    ...:         a = inst.type
+    ...: 
+
+
+  
+  In [29]: num_queries()
+  101
+
+  ```
+  
+  Here, let's look at the SQL queries being made.
+  
+  The query for filtering:
+  
+  ```sql
+  'SELECT "api_installmentschedule"."id", '
+         '"api_installmentschedule"."date_sms_verification_sent", '
+         '"api_installmentschedule"."invoice_id", '
+         ...
+         ...
+         ...
+         'INNER JOIN "api_installment" ON ("api_installmentschedule"."id" = '
+         '"api_installment"."schedule_id") WHERE "api_installment"."id" IS NOT '
+         'NULL LIMIT 100'
+  ```
+  
+  Other queries for accessing installment's type field:
+  
+  ```sql
+        'SELECT "api_installment"."id", "api_installment"."schedule_id", '
+        '"api_installment"."type", "api_installment"."type_moratorium", '
+         ...
+         '"api_installment"."schedule_id" = 1 ORDER BY '
+         '"api_installment"."date_start" ASC, "api_installment"."date_end" '
+         'ASC, "api_installment"."id" ASC'
+         ...
+         ...
+         ...
+         
+         'SELECT "api_installment"."id", "api_installment"."schedule_id", '
+         '"api_installment"."type", "api_installment"."type_moratorium", '
+         ...
+         '"api_installment"."schedule_id" = 3 ORDER BY '
+         '"api_installment"."date_start" ASC, "api_installment"."date_end" '
+         'ASC, "api_installment"."id" ASC'
+         
+         ...
+         ...
+         ...
+         
+         'SELECT "api_installment"."id", "api_installment"."schedule_id", '
+         '"api_installment"."type", "api_installment"."type_moratorium", '
+         ...
+         '"api_installment"."schedule_id" = 5 ORDER BY '
+         '"api_installment"."date_start" ASC, "api_installment"."date_end" '
+         'ASC, "api_installment"."id" ASC',
+         
+         ...
+         ...
+         ...
+         
+         
+  ```
+  
+  Since we limit InstallmentSchedule query to 100 rows, we get N+1, 101.
+  
+  We can do better with prefetch_related.
+  
+  ```py
+  In [12]: schedules = InstallmentSchedule.objects.filter(installments__isnull=False).prefetch_related('installments')[:100]
+
+  In [13]: for sch in schedules:
+      ...:     installments = sch.installments.all()
+      ...:     for inst in installments:
+      ...:         a = inst.type
+      ...: 
+
+  In [14]: len(connection.queries)
+  Out[14]: 2
+  ```
+  
+  Looking at the two SQL queries made:
+  
+  ```sql
+         'SELECT "api_installmentschedule"."id", '
+         '"api_installmentschedule"."date_sms_verification_sent", '
+         '"api_installmentschedule"."invoice_id", '
+         '"api_installmentschedule"."subcontract_pdf", '
+         '"api_installmentschedule"."covid19_moratorium_subcontract_pdf", '
+         '"api_installmentschedule"."reference_id", '
+         '"api_installmentschedule"."amount_principal", '
+         '"api_installmentschedule"."interest_rate", '
+         '"api_installmentschedule"."fee_rate", '
+         '"api_installmentschedule"."initial_principal", '
+         '"api_installmentschedule"."initial_months", '
+         '"api_installmentschedule"."initial_installment_amount", '
+         '"api_installmentschedule"."date_created", '
+         '"api_installmentschedule"."date_confirmed", '
+         '"api_installmentschedule"."date_activated", '
+         '"api_installmentschedule"."date_cancelled", '
+         '"api_installmentschedule"."date_paid", '
+         '"api_installmentschedule"."date_accelerated", '
+         '"api_installmentschedule"."cancel_reason", '
+         '"api_installmentschedule"."date_covid19_moratorium_approved", '
+         '"api_installmentschedule"."date_covid19_moratorium_end", '
+         '"api_installmentschedule"."date_covid19_installments_recalculated", '
+         '"api_installmentschedule"."device_id" FROM "api_installmentschedule" '
+         'INNER JOIN "api_installment" ON ("api_installmentschedule"."id" = '
+         '"api_installment"."schedule_id") WHERE "api_installment"."id" IS NOT '
+         'NULL LIMIT 100'
+         
+         'SELECT "api_installment"."id", "api_installment"."schedule_id", '
+         '"api_installment"."type", "api_installment"."type_moratorium", '
+         '"api_installment"."invoice_id", '
+         '"api_installment"."amount_principal", '
+         '"api_installment"."amount_interest", "api_installment"."amount_fee", '
+         '"api_installment"."date_start", "api_installment"."date_end", '
+         '"api_installment"."period_rank", '
+         '"api_installment"."date_invalidated", '
+         '"api_installment"."is_acceleration" FROM "api_installment" WHERE '
+         '"api_installment"."schedule_id" IN (1, 2, 3, 5, 6, 7, 8, 9, 10, 11, '
+         '12, 13, 14, 15, 17, 18, 20, 21, 22, 32, 33, 34, 35, 37, 38, 44) '
+         'ORDER BY "api_installment"."date_start" ASC, '
+         '"api_installment"."date_end" ASC, "api_installment"."id" ASC'
+     
+  ```
+  
+  Here, we SELECT all InstallmentSchedule rows with columns with the condition that it's installments is not NULL. And we INNER JOIN Installment table onto InstallmentSchedule table.
+  
+  Then, we fetch all fields of related Installment rows.
  
  ---
  
