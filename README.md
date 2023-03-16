@@ -859,6 +859,299 @@ Execution time: 0.032450s [Database: default]
 ...
 ```
 
+ <div id="select-prefetch-related">
+ <h2>Select & Prefetch Related</h2>
+ </div>
+ 
+  <h3> Select Related </h3>
+  
+ We use `select_related` on forward relationships such as Foreign Key and OneToOne fields.
+ 
+ We have a model such as follows:
+ 
+ ```py
+ class Installment(models.Model):
+    schedule = models.ForeignKey("api.InstallmentSchedule", related_name="installments", on_delete=models.PROTECT)
+    invoice = models.OneToOneField("api.Invoice", related_name="installment", on_delete=models.PROTECT, null=True)
+    ...
+    
+ ```
+ 
+ Here `Intallment` model has a Foreign Key relationship with schedule and OneToOne relationship with Invoice.
+ 
+ Defining our `traverse` function and `time_` decorator.
+ 
+ ```py
+ 
+    def time_(func):
+        @wraps(func)
+        def wrapped(*args, **kwargs):
+            t1 = time.time()
+            func(*args, **kwargs)
+            t2 = time.time()
+            print(f"Time elapsed : {round((t2-t1), 3)}")
+        return wrapped
+        
+    @time_
+    def traverse(installments):
+        for ins in installments[:20]:
+            _, _ = ins.invoice.date_created, ins.schedule.date_created
+
+ ```
+ 
+ Then, our query with select_related:
+ 
+ ```py
+ installments = (
+       Installment.objects.filter(invoice__isnull=False)
+      .select_related("invoice", "schedule")
+  )
+  
+  
+  traverse(installments)
+  Time elapsed : 0.066s
+
+ ```
+ 
+ Using without select_related
+ 
+ ```py
+ installments = (
+       Installment.objects.filter(invoice__isnull=False)
+  )
+    
+ traverse(installments)
+ Time elapsed : 1.61s
+ ```
+ 
+ Summary: <b>Use select_related if you traverse, and hit fields of the objects you fetch from database! </b>
+ 
+  <h3> Prefetch Related </h3>
+  
+  Prefetch related is used with reverse ManyToMany and reverse ForeignKey relations. This is to say that we deal with object sets rather than a single object.
+  
+  I'm using this code snippet to import necessary methods to count SQL queries made.
+  
+  ```py
+  from django.db import connection, reset_queries
+  def num_queries(reset=True):
+      print(len(connection.queries))
+      if reset:
+          reset_queries()
+  ```
+  
+  ```py
+  
+  schedules = InstallmentSchedule.objects.filter(installments__isnull=False)[:100]
+  
+  In [28]: for sch in schedules:
+    ...:     installments = sch.installments.all()
+    ...:     for inst in installments:
+    ...:         a = inst.type
+    ...: 
+
+
+  
+  In [29]: num_queries()
+  101
+
+  ```
+  
+  Here, let's look at the SQL queries being made.
+  
+  The query for filtering:
+  
+  ```sql
+  'SELECT "api_installmentschedule"."id", '
+         '"api_installmentschedule"."date_sms_verification_sent", '
+         '"api_installmentschedule"."invoice_id", '
+         ...
+         ...
+         ...
+         'INNER JOIN "api_installment" ON ("api_installmentschedule"."id" = '
+         '"api_installment"."schedule_id") WHERE "api_installment"."id" IS NOT '
+         'NULL LIMIT 100'
+  ```
+  
+  Other queries for accessing installment's type field:
+  
+  ```sql
+        'SELECT "api_installment"."id", "api_installment"."schedule_id", '
+        '"api_installment"."type", "api_installment"."type_moratorium", '
+         ...
+         '"api_installment"."schedule_id" = 1 ORDER BY '
+         '"api_installment"."date_start" ASC, "api_installment"."date_end" '
+         'ASC, "api_installment"."id" ASC'
+         ...
+         ...
+         ...
+         
+         'SELECT "api_installment"."id", "api_installment"."schedule_id", '
+         '"api_installment"."type", "api_installment"."type_moratorium", '
+         ...
+         '"api_installment"."schedule_id" = 3 ORDER BY '
+         '"api_installment"."date_start" ASC, "api_installment"."date_end" '
+         'ASC, "api_installment"."id" ASC'
+         
+         ...
+         ...
+         ...
+         
+         'SELECT "api_installment"."id", "api_installment"."schedule_id", '
+         '"api_installment"."type", "api_installment"."type_moratorium", '
+         ...
+         '"api_installment"."schedule_id" = 5 ORDER BY '
+         '"api_installment"."date_start" ASC, "api_installment"."date_end" '
+         'ASC, "api_installment"."id" ASC',
+         
+         ...
+         ...
+         ...
+         
+         
+  ```
+  
+  Since we limit InstallmentSchedule query to 100 rows, we get N+1, 101.
+  
+  We can do better with prefetch_related.
+  
+  ```py
+  In [12]: schedules = InstallmentSchedule.objects.filter(installments__isnull=False).prefetch_related('installments')[:100]
+
+  In [13]: for sch in schedules:
+      ...:     installments = sch.installments.all()
+      ...:     for inst in installments:
+      ...:         a = inst.type
+      ...: 
+
+  In [14]: len(connection.queries)
+  Out[14]: 2
+  ```
+  
+  Looking at the two SQL queries made:
+  
+  ```sql
+         'SELECT "api_installmentschedule"."id", '
+         '"api_installmentschedule"."date_sms_verification_sent", '
+         '"api_installmentschedule"."invoice_id", '
+         '"api_installmentschedule"."subcontract_pdf", '
+         '"api_installmentschedule"."covid19_moratorium_subcontract_pdf", '
+         '"api_installmentschedule"."reference_id", '
+         '"api_installmentschedule"."amount_principal", '
+         '"api_installmentschedule"."interest_rate", '
+         '"api_installmentschedule"."fee_rate", '
+         '"api_installmentschedule"."initial_principal", '
+         '"api_installmentschedule"."initial_months", '
+         '"api_installmentschedule"."initial_installment_amount", '
+         '"api_installmentschedule"."date_created", '
+         '"api_installmentschedule"."date_confirmed", '
+         '"api_installmentschedule"."date_activated", '
+         '"api_installmentschedule"."date_cancelled", '
+         '"api_installmentschedule"."date_paid", '
+         '"api_installmentschedule"."date_accelerated", '
+         '"api_installmentschedule"."cancel_reason", '
+         '"api_installmentschedule"."date_covid19_moratorium_approved", '
+         '"api_installmentschedule"."date_covid19_moratorium_end", '
+         '"api_installmentschedule"."date_covid19_installments_recalculated", '
+         '"api_installmentschedule"."device_id" FROM "api_installmentschedule" '
+         'INNER JOIN "api_installment" ON ("api_installmentschedule"."id" = '
+         '"api_installment"."schedule_id") WHERE "api_installment"."id" IS NOT '
+         'NULL LIMIT 100'
+         
+         'SELECT "api_installment"."id", "api_installment"."schedule_id", '
+         '"api_installment"."type", "api_installment"."type_moratorium", '
+         '"api_installment"."invoice_id", '
+         '"api_installment"."amount_principal", '
+         '"api_installment"."amount_interest", "api_installment"."amount_fee", '
+         '"api_installment"."date_start", "api_installment"."date_end", '
+         '"api_installment"."period_rank", '
+         '"api_installment"."date_invalidated", '
+         '"api_installment"."is_acceleration" FROM "api_installment" WHERE '
+         '"api_installment"."schedule_id" IN (1, 2, 3, 5, 6, 7, 8, 9, 10, 11, '
+         '12, 13, 14, 15, 17, 18, 20, 21, 22, 32, 33, 34, 35, 37, 38, 44) '
+         'ORDER BY "api_installment"."date_start" ASC, '
+         '"api_installment"."date_end" ASC, "api_installment"."id" ASC'
+     
+  ```
+  
+  Here, we SELECT all InstallmentSchedule rows with columns with the condition that it's installments is not NULL. And we INNER JOIN Installment table onto InstallmentSchedule table.
+  
+  Then, we fetch all fields of related Installment rows.
+  
+  <h3>Using Prefetch() object </h3>
+  
+  If we want to reach Invoice table from Installment table, the query count will increase to three even if we prefetched Installment table.
+  
+  ```py
+  In [25]: schedules = InstallmentSchedule.objects.alias(
+    ...:     installment_invoice_count=Count(F('installments__invoice')),
+    ...:     installment_count=Count(F('installments'))
+    ...: ).filter(
+    ...:     installment_invoice_count=F('installment_count')
+    ...: ).prefetch_related('installments__invoice')
+
+
+  In [27]: for sch in schedules:
+      ...:     installments = sch.installments.all()
+      ...:     for inst in installments:
+      ...:         a = inst.invoice.date_created
+      ...: 
+
+  In [28]: len(connection.queries)
+  Out[28]: 3
+```
+
+We should always be able to get 2 queries with prefetch_related. At least this is what I know from the articles I read so far. For that, in order to select Invoice table (OneToOne related with Installment table), we will use the `Prefetch()` object.
+
+```py
+In [171]: installment_invoices = Installment.objects.filter(invoice__isnull=False).select_related('invoice')
+
+In [172]: schedules = InstallmentSchedule.objects.filter(installments__isnull=False).prefetch_related(Prefetch('installments', queryset=inst
+     ...: allment_invoices))
+
+In [173]: for sch in schedules:
+     ...:     installments = sch.installments.all()
+     ...:     for inst in installments:
+     ...:         a = inst.invoice.date_created
+     ...: 
+
+In [174]: len(connection.queries)
+Out[174]: 2
+
+```
+
+Queries being made for this:
+
+<h3>Select for Update</h3>
+
+`select_for_update(nowait=False, skip_locked=False, of=(), no_key=False)`
+
+Returns a queryset that will lock rows until the end of the transaction, generating a <b>SELECT ... FOR UPDATE</b> SQL statement on supported databases.
+
+<h4>nowait: bool = False</h4>
+
+nowait parameter is used to dictate whether "to wait or not to wait" the lock to be released by the lock owner. This means that if nowait=False, the query wouldn't evaluate until the owner of the lock releases it. If it is True, Django will throw `OperationalError: could not obtain lock on row in relation ... `
+
+I have a simple demo like this:
+
+![Screenshot 2023-03-16 at 23 26 26](https://user-images.githubusercontent.com/31994778/225744711-5b57b5bb-9512-4b03-be5e-0d938ad6b8f7.png)
+
+![Screenshot 2023-03-16 at 23 30 51](https://user-images.githubusercontent.com/31994778/225745806-f39913d6-c3cd-45ce-a4db-0ae8a749c1b5.png)
+
+
+<h4>skip_locked: bool = False </h4>
+
+`skip_locked` means if it is True, it will ignore the locked rows and these locked rows will be excluded in the query set.
+
+
+![Screenshot 2023-03-16 at 23 06 34](https://user-images.githubusercontent.com/31994778/225740745-45b06e3f-f323-4b14-9a1c-fcdd8c67b1b2.png)
+
+![Screenshot 2023-03-16 at 23 09 53](https://user-images.githubusercontent.com/31994778/225741524-336538ff-1c76-40f1-b50e-13bcf25d3115.png)
+
+<b>nowait and skip_locked cannot be True simultaneously</b>
+
+![Screenshot 2023-03-16 at 23 34 09](https://user-images.githubusercontent.com/31994778/225746592-c255fc3c-082e-497a-a12b-722cf778e84b.png)
+
 ---
 
 <div id="drf">
@@ -2025,274 +2318,6 @@ We are inside models.py
 <b>Here, it's very important to see that we can define as many serializer class as we want. As long as the ones we define for POST, PUT, PATCH methods are static, i.e., not changing, we can defined many serializer classes for displaying GET request results differently.</b>
  
  In this way, serializers of Django are very much like aggregation in MongoDB.
- 
- ---
- 
- <div id="select-prefetch-related">
- <h2>Select & Prefetch Related</h2>
- </div>
- 
-  <h3> Select Related </h3>
-  
- We use `select_related` on forward relationships such as Foreign Key and OneToOne fields.
- 
- We have a model such as follows:
- 
- ```py
- class Installment(models.Model):
-    schedule = models.ForeignKey("api.InstallmentSchedule", related_name="installments", on_delete=models.PROTECT)
-    invoice = models.OneToOneField("api.Invoice", related_name="installment", on_delete=models.PROTECT, null=True)
-    ...
-    
- ```
- 
- Here `Intallment` model has a Foreign Key relationship with schedule and OneToOne relationship with Invoice.
- 
- Defining our `traverse` function and `time_` decorator.
- 
- ```py
- 
-    def time_(func):
-        @wraps(func)
-        def wrapped(*args, **kwargs):
-            t1 = time.time()
-            func(*args, **kwargs)
-            t2 = time.time()
-            print(f"Time elapsed : {round((t2-t1), 3)}")
-        return wrapped
-        
-    @time_
-    def traverse(installments):
-        for ins in installments[:20]:
-            _, _ = ins.invoice.date_created, ins.schedule.date_created
-
- ```
- 
- Then, our query with select_related:
- 
- ```py
- installments = (
-       Installment.objects.filter(invoice__isnull=False)
-      .select_related("invoice", "schedule")
-  )
-  
-  
-  traverse(installments)
-  Time elapsed : 0.066s
-
- ```
- 
- Using without select_related
- 
- ```py
- installments = (
-       Installment.objects.filter(invoice__isnull=False)
-  )
-    
- traverse(installments)
- Time elapsed : 1.61s
- ```
- 
- Summary: <b>Use select_related if you traverse, and hit fields of the objects you fetch from database! </b>
- 
-  <h3> Prefetch Related </h3>
-  
-  Prefetch related is used with reverse ManyToMany and reverse ForeignKey relations. This is to say that we deal with object sets rather than a single object.
-  
-  I'm using this code snippet to import necessary methods to count SQL queries made.
-  
-  ```py
-  from django.db import connection, reset_queries
-  def num_queries(reset=True):
-      print(len(connection.queries))
-      if reset:
-          reset_queries()
-  ```
-  
-  ```py
-  
-  schedules = InstallmentSchedule.objects.filter(installments__isnull=False)[:100]
-  
-  In [28]: for sch in schedules:
-    ...:     installments = sch.installments.all()
-    ...:     for inst in installments:
-    ...:         a = inst.type
-    ...: 
-
-
-  
-  In [29]: num_queries()
-  101
-
-  ```
-  
-  Here, let's look at the SQL queries being made.
-  
-  The query for filtering:
-  
-  ```sql
-  'SELECT "api_installmentschedule"."id", '
-         '"api_installmentschedule"."date_sms_verification_sent", '
-         '"api_installmentschedule"."invoice_id", '
-         ...
-         ...
-         ...
-         'INNER JOIN "api_installment" ON ("api_installmentschedule"."id" = '
-         '"api_installment"."schedule_id") WHERE "api_installment"."id" IS NOT '
-         'NULL LIMIT 100'
-  ```
-  
-  Other queries for accessing installment's type field:
-  
-  ```sql
-        'SELECT "api_installment"."id", "api_installment"."schedule_id", '
-        '"api_installment"."type", "api_installment"."type_moratorium", '
-         ...
-         '"api_installment"."schedule_id" = 1 ORDER BY '
-         '"api_installment"."date_start" ASC, "api_installment"."date_end" '
-         'ASC, "api_installment"."id" ASC'
-         ...
-         ...
-         ...
-         
-         'SELECT "api_installment"."id", "api_installment"."schedule_id", '
-         '"api_installment"."type", "api_installment"."type_moratorium", '
-         ...
-         '"api_installment"."schedule_id" = 3 ORDER BY '
-         '"api_installment"."date_start" ASC, "api_installment"."date_end" '
-         'ASC, "api_installment"."id" ASC'
-         
-         ...
-         ...
-         ...
-         
-         'SELECT "api_installment"."id", "api_installment"."schedule_id", '
-         '"api_installment"."type", "api_installment"."type_moratorium", '
-         ...
-         '"api_installment"."schedule_id" = 5 ORDER BY '
-         '"api_installment"."date_start" ASC, "api_installment"."date_end" '
-         'ASC, "api_installment"."id" ASC',
-         
-         ...
-         ...
-         ...
-         
-         
-  ```
-  
-  Since we limit InstallmentSchedule query to 100 rows, we get N+1, 101.
-  
-  We can do better with prefetch_related.
-  
-  ```py
-  In [12]: schedules = InstallmentSchedule.objects.filter(installments__isnull=False).prefetch_related('installments')[:100]
-
-  In [13]: for sch in schedules:
-      ...:     installments = sch.installments.all()
-      ...:     for inst in installments:
-      ...:         a = inst.type
-      ...: 
-
-  In [14]: len(connection.queries)
-  Out[14]: 2
-  ```
-  
-  Looking at the two SQL queries made:
-  
-  ```sql
-         'SELECT "api_installmentschedule"."id", '
-         '"api_installmentschedule"."date_sms_verification_sent", '
-         '"api_installmentschedule"."invoice_id", '
-         '"api_installmentschedule"."subcontract_pdf", '
-         '"api_installmentschedule"."covid19_moratorium_subcontract_pdf", '
-         '"api_installmentschedule"."reference_id", '
-         '"api_installmentschedule"."amount_principal", '
-         '"api_installmentschedule"."interest_rate", '
-         '"api_installmentschedule"."fee_rate", '
-         '"api_installmentschedule"."initial_principal", '
-         '"api_installmentschedule"."initial_months", '
-         '"api_installmentschedule"."initial_installment_amount", '
-         '"api_installmentschedule"."date_created", '
-         '"api_installmentschedule"."date_confirmed", '
-         '"api_installmentschedule"."date_activated", '
-         '"api_installmentschedule"."date_cancelled", '
-         '"api_installmentschedule"."date_paid", '
-         '"api_installmentschedule"."date_accelerated", '
-         '"api_installmentschedule"."cancel_reason", '
-         '"api_installmentschedule"."date_covid19_moratorium_approved", '
-         '"api_installmentschedule"."date_covid19_moratorium_end", '
-         '"api_installmentschedule"."date_covid19_installments_recalculated", '
-         '"api_installmentschedule"."device_id" FROM "api_installmentschedule" '
-         'INNER JOIN "api_installment" ON ("api_installmentschedule"."id" = '
-         '"api_installment"."schedule_id") WHERE "api_installment"."id" IS NOT '
-         'NULL LIMIT 100'
-         
-         'SELECT "api_installment"."id", "api_installment"."schedule_id", '
-         '"api_installment"."type", "api_installment"."type_moratorium", '
-         '"api_installment"."invoice_id", '
-         '"api_installment"."amount_principal", '
-         '"api_installment"."amount_interest", "api_installment"."amount_fee", '
-         '"api_installment"."date_start", "api_installment"."date_end", '
-         '"api_installment"."period_rank", '
-         '"api_installment"."date_invalidated", '
-         '"api_installment"."is_acceleration" FROM "api_installment" WHERE '
-         '"api_installment"."schedule_id" IN (1, 2, 3, 5, 6, 7, 8, 9, 10, 11, '
-         '12, 13, 14, 15, 17, 18, 20, 21, 22, 32, 33, 34, 35, 37, 38, 44) '
-         'ORDER BY "api_installment"."date_start" ASC, '
-         '"api_installment"."date_end" ASC, "api_installment"."id" ASC'
-     
-  ```
-  
-  Here, we SELECT all InstallmentSchedule rows with columns with the condition that it's installments is not NULL. And we INNER JOIN Installment table onto InstallmentSchedule table.
-  
-  Then, we fetch all fields of related Installment rows.
-  
-  <h3>Using Prefetch() object </h3>
-  
-  If we want to reach Invoice table from Installment table, the query count will increase to three even if we prefetched Installment table.
-  
-  ```py
-  In [25]: schedules = InstallmentSchedule.objects.alias(
-    ...:     installment_invoice_count=Count(F('installments__invoice')),
-    ...:     installment_count=Count(F('installments'))
-    ...: ).filter(
-    ...:     installment_invoice_count=F('installment_count')
-    ...: ).prefetch_related('installments__invoice')
-
-
-  In [27]: for sch in schedules:
-      ...:     installments = sch.installments.all()
-      ...:     for inst in installments:
-      ...:         a = inst.invoice.date_created
-      ...: 
-
-  In [28]: len(connection.queries)
-  Out[28]: 3
-```
-
-We should always be able to get 2 queries with prefetch_related. At least this is what I know from the articles I read so far. For that, in order to select Invoice table (OneToOne related with Installment table), we will use the `Prefetch()` object.
-
-```py
-In [171]: installment_invoices = Installment.objects.filter(invoice__isnull=False).select_related('invoice')
-
-In [172]: schedules = InstallmentSchedule.objects.filter(installments__isnull=False).prefetch_related(Prefetch('installments', queryset=inst
-     ...: allment_invoices))
-
-In [173]: for sch in schedules:
-     ...:     installments = sch.installments.all()
-     ...:     for inst in installments:
-     ...:         a = inst.invoice.date_created
-     ...: 
-
-In [174]: len(connection.queries)
-Out[174]: 2
-
-```
-
-Queries being made for this:
-
-
-  
  
  ---
  
