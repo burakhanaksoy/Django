@@ -28,7 +28,6 @@
 [Model Serializer](#model-serializer)
 [Serializer Method Fields](#custom-fields)
 [Relationships](#relationships)
-[Select & Prefetch Related](#select-prefetch-related)
 [Writing Views for StudentsDetail](#students-detail-views)
 [User Model](#user-model)
 [Permissions](#permissions)
