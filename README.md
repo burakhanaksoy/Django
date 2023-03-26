@@ -801,6 +801,134 @@ SELECT "my_demo_app_student"."id", "my_demo_app_student"."first_name", "my_demo_
 SELECT "my_demo_app_student"."id", "my_demo_app_student"."first_name", "my_demo_app_student"."last_name", "my_demo_app_student"."age", "my_demo_app_student"."teacher" FROM "my_demo_app_student" WHERE NOT ("my_demo_app_student"."age" = 26)
 ```
 
+<h3>Conditional Expressions</h3>
+
+A conditional expression evaluates a series of conditions for each row of a table and returns the matching result expression.
+
+Let's say I have two related models as follows:
+
+```py
+class Author(models.Model):
+    TRY = "TR"
+    USA = "US"
+    GER = "GE"
+
+    COUNTRY_CHOICES = (
+        (TRY, "Turkey"),
+        (USA, "United States"),
+        (GER, "Germany"),
+    )
+    name = models.CharField(max_length=100)
+    country = models.CharField(max_length=2, choices=COUNTRY_CHOICES)
+
+    def __str__(self):
+        return f"Author ({self.name})"
+
+
+class Book(models.Model):
+    title = models.CharField(max_length=100)
+    author = models.ForeignKey(Author, on_delete=models.CASCADE, related_name='books')
+    price = models.DecimalField(max_digits=5, decimal_places=2)
+
+    def __str__(self):
+        return f'Book ({self.title})'
+
+```
+
+Let's say that we want to apply different rates of discount depending on the price of the book.
+
+ - 0 < price < 30 -> %5 discount
+ - 30 < price < 60 -> %10 discount
+ - 60 < price < 100 -> %15 discount
+ 
+ To do that, we use `annotate`, `Case`, and `When` expressions.
+ 
+ ```py
+ Book.objects.annotate(
+    discount=Case(
+        When(
+            price__lt=30,
+            then=Value('5%')
+        ),
+        When(
+            price__lt=60,
+            then=Value('10%')
+        ),
+        When(
+            price__lt=100,
+            then=Value('15%')
+        ),
+        default=Value('0%')
+    )
+).values_list("title", "price", "discount")
+ ```
+ 
+ This will result in the following SQL query:
+ 
+ ```sql
+ [{'sql': 'SELECT "customer_book"."title", "customer_book"."price", CASE WHEN '
+         '"customer_book"."price" < 30 THEN \'5%\' WHEN '
+         '"customer_book"."price" < 60 THEN \'10%\' WHEN '
+         '"customer_book"."price" < 100 THEN \'15%\' ELSE \'0%\' END AS '
+         '"discount" FROM "customer_book" LIMIT 21',
+  'time': '0.000'}]
+  ```
+  
+  We may want to find out discounted price after detecting discount, for that we can do
+  
+  ```py
+  class Round(Func):
+    function = 'ROUND'
+    template='%(function)s(%(expressions)s, 2)'
+
+Book.objects.annotate(
+    discount=Case(
+        When(
+            price__lt=30,
+            then=Value(0.05)
+        ),
+        When(
+            price__lt=60,
+            then=Value(0.1)
+        ),
+        When(
+            price__lt=100,
+            then=Value(0.15)
+        ),
+        default=Value(0),
+        output_field=models.DecimalField()
+    )
+).annotate(
+    after_discount=ExpressionWrapper(
+        Round(
+            (1 - F('discount')) * F('price'),
+        ),
+        output_field=models.DecimalField()
+    ),
+).values("title", "price", "discount", "after_discount")
+  ```
+  
+  results in:
+  
+  ```
+  [{'after_discount': Decimal('32.33'),
+  'discount': Decimal('0.1'),
+  'price': Decimal('35.92'),
+  'title': 'Try high part.'},
+ {'after_discount': Decimal('11.53'),
+  'discount': Decimal('0.05'),
+  'price': Decimal('12.14'),
+  'title': 'Travel determine.'},
+ {'after_discount': Decimal('67.74'),
+  'discount': Decimal('0.15'),
+  'price': Decimal('79.69'),
+  'title': 'Many worker various.'},
+  
+  ...
+  ...
+  
+```
+
 <h3>Order of annotate() and values() clauses</h3>
 
 This is taken from [django docs](https://docs.djangoproject.com/en/4.1/topics/db/aggregation/#order-of-annotate-and-values-clauses)
@@ -1118,8 +1246,6 @@ In [174]: len(connection.queries)
 Out[174]: 2
 
 ```
-
-Queries being made for this:
 
 <h3>Select for Update</h3>
 
